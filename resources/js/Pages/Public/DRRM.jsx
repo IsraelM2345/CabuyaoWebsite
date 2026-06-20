@@ -17,6 +17,8 @@ import {
     Package,
 } from "lucide-react";
 
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
 // --- DRRM DATA ---
 const HOTLINES = [
     {

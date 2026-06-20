@@ -11,6 +11,8 @@ import {
     ChevronUp,
 } from "lucide-react";
 
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
 // --- FAQS DATA ---
 const FAQ_CATEGORIES = [
     {

@@ -10,6 +10,9 @@ import {
     Image as ImageIcon,
 } from "lucide-react";
 
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
+
 const CATEGORIES = ["All", "Festivals", "Government", "Tourism", "Community"];
 
 // Helper function to normalize category from database to display categories

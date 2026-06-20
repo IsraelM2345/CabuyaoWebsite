@@ -15,6 +15,9 @@ import {
     Target,
 } from "lucide-react";
 
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
+
 export default function Mayor() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [openMobileDropdown, setOpenMobileDropdown] = useState(null);

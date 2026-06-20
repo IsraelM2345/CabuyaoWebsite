@@ -15,6 +15,9 @@ import {
     Globe,
 } from "lucide-react";
 
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
+
 const CATEGORIES = [
     "All",
     "DRRM",

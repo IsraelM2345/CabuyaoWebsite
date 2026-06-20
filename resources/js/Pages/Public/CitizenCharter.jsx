@@ -16,6 +16,8 @@ import {
     Hammer,
 } from "lucide-react";
 
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
 // Multiple Citizen Charters from different departments
 const CITIZEN_CHARTERS = [
     {

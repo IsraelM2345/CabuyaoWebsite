@@ -10,6 +10,8 @@ import {
     Camera,
     Navigation,
 } from "lucide-react";
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
 
 // --- TOURISM DATA ---
 const TOURISM_SPOTS = [

@@ -16,6 +16,9 @@ import {
     User,
 } from "lucide-react";
 
+import PublicHeader from "../../Components/PublicHeader";
+import PublicFooter from "../../Components/PublicFooter";
+
 const API_BASE_URL = "/api/public";
 
 // Helper function to format dates in a readable format (e.g., "July 1, 2025")

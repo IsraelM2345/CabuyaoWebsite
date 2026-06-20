@@ -103,7 +103,7 @@ export default function PublicHeader({ activePage = "home" }) {
 
     return (
         <>
-            {/* 1. TOP BAR */}
+            {/* 1. TOP BAR (Scrolls away naturally) */}
             <div
                 className="w-full h-8 flex items-center justify-between px-6 text-white text-xs font-medium"
                 style={{
@@ -115,178 +115,191 @@ export default function PublicHeader({ activePage = "home" }) {
                 <WeatherWidget />
             </div>
 
-            {/* 2. NAVIGATION BAR */}
-            <nav className="w-full bg-white px-6 md:px-12 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
-                <div className="flex items-center gap-3">
-                    <img
-                        src="/images/city-cab.png"
-                        alt="Cabuyao Logo"
-                        className="w-12 h-12 object-contain rounded-full border-2 border-red-500 p-0.5 bg-white"
-                        onError={(e) =>
-                            (e.target.src =
-                                "https://via.placeholder.com/150?text=LOGO")
-                        }
-                    />
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-900 leading-tight">
-                            City of Cabuyao
-                        </h1>
-                        <p className="text-xs text-gray-500">
-                            Official E-Governance Portal
-                        </p>
+            {/* STICKY CONTAINER: Wraps both Nav and Mobile Menu to prevent overlap */}
+            <div className="sticky top-0 z-50 w-full shadow-sm bg-white">
+                {/* 2. NAVIGATION BAR */}
+                <nav className="w-full bg-white px-6 md:px-12 py-4 flex items-center justify-between">
+                    <a
+                        href="/"
+                        className="flex items-center gap-3 group cursor-pointer"
+                    >
+                        <img
+                            src="/images/city-cab.png"
+                            alt="Cabuyao Logo"
+                            className="w-12 h-12 object-contain rounded-full border-2 border-red-500 p-0.5 bg-white group-hover:scale-110 transition-transform duration-300"
+                            onError={(e) =>
+                                (e.target.src =
+                                    "https://via.placeholder.com/150?text=LOGO")
+                            }
+                        />
+                        <div>
+                            <h1 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-red-600 transition-colors">
+                                City of Cabuyao
+                            </h1>
+                            <p className="text-xs text-gray-500">
+                                Official E-Governance Portal
+                            </p>
+                        </div>
+                    </a>
+
+                    {/* DESKTOP MENU */}
+                    <div className="hidden xl:flex items-center gap-6">
+                        <a
+                            href="/"
+                            className={`text-sm font-semibold px-4 py-2 rounded-full transition ${
+                                isActive("home")
+                                    ? "text-red-600 bg-red-50"
+                                    : "text-gray-600 hover:text-red-600"
+                            }`}
+                        >
+                            Home
+                        </a>
+
+                        <DesktopDropdown
+                            label="The City"
+                            items={NAV_ITEMS.theCity}
+                            active={isActive("city")}
+                        />
+
+                        <DesktopDropdown
+                            label="Government"
+                            items={NAV_ITEMS.government}
+                            active={isActive("government")}
+                        />
+
+                        <DesktopDropdown
+                            label="E-Services"
+                            items={NAV_ITEMS.eServices}
+                            active={isActive("services")}
+                        />
+
+                        <a
+                            href="/drrm"
+                            className={`text-sm font-medium transition ${
+                                isActive("drrm")
+                                    ? "text-red-600"
+                                    : "text-gray-600 hover:text-red-600"
+                            }`}
+                        >
+                            DRRM
+                        </a>
+                        <a
+                            href="/news"
+                            className={`text-sm font-medium transition ${
+                                isActive("news")
+                                    ? "text-red-600"
+                                    : "text-gray-600 hover:text-red-600"
+                            }`}
+                        >
+                            News
+                        </a>
+                        <a
+                            href="/faqs"
+                            className={`text-sm font-medium transition ${
+                                isActive("faqs")
+                                    ? "text-red-600"
+                                    : "text-gray-600 hover:text-red-600"
+                            }`}
+                        >
+                            FAQs
+                        </a>
+                        <a
+                            href="/contact"
+                            className={`text-sm font-medium transition ${
+                                isActive("contact")
+                                    ? "text-red-600"
+                                    : "text-gray-600 hover:text-red-600"
+                            }`}
+                        >
+                            Contact
+                        </a>
                     </div>
-                </div>
 
-                {/* DESKTOP MENU */}
-                <div className="hidden xl:flex items-center gap-6">
-                    <a
-                        href="/"
-                        className={`text-sm font-semibold px-4 py-2 rounded-full transition ${
-                            isActive("home")
-                                ? "text-red-600 bg-red-50"
-                                : "text-gray-600 hover:text-red-600"
-                        }`}
-                    >
-                        Home
-                    </a>
+                    {/* MOBILE MENU BUTTON */}
+                    <div className="xl:hidden flex items-center">
+                        <button
+                            onClick={() =>
+                                setIsMobileMenuOpen(!isMobileMenuOpen)
+                            }
+                            className="text-gray-800 hover:text-red-600 focus:outline-none transition-colors"
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? (
+                                <X size={28} />
+                            ) : (
+                                <Menu size={28} />
+                            )}
+                        </button>
+                    </div>
+                </nav>
 
-                    <DesktopDropdown
-                        label="The City"
-                        items={NAV_ITEMS.theCity}
-                        active={isActive("city")}
-                    />
+                {/* 3. MOBILE MENU (Now flows naturally below the Nav inside the sticky wrapper) */}
+                {isMobileMenuOpen && (
+                    <div className="w-full bg-white shadow-xl border-t border-gray-100 xl:hidden overflow-y-auto max-h-[calc(100vh-80px)]">
+                        <a
+                            href="/"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`block px-6 py-4 text-sm font-bold transition-colors ${
+                                isActive("home")
+                                    ? "text-red-600 bg-red-50 border-l-4 border-red-600"
+                                    : "text-gray-800 hover:text-red-600"
+                            }`}
+                        >
+                            Home
+                        </a>
 
-                    <DesktopDropdown
-                        label="Government"
-                        items={NAV_ITEMS.government}
-                        active={isActive("government")}
-                    />
+                        <MobileAccordion
+                            label="The City"
+                            items={NAV_ITEMS.theCity}
+                            isOpen={openMobileDropdown === "city"}
+                            onToggle={() => toggleMobileDropdown("city")}
+                        />
 
-                    <DesktopDropdown
-                        label="E-Services"
-                        items={NAV_ITEMS.eServices}
-                        active={isActive("services")}
-                    />
+                        <MobileAccordion
+                            label="Government"
+                            items={NAV_ITEMS.government}
+                            isOpen={openMobileDropdown === "gov"}
+                            onToggle={() => toggleMobileDropdown("gov")}
+                        />
 
-                    <a
-                        href="/drrm"
-                        className={`text-sm font-medium transition ${
-                            isActive("drrm")
-                                ? "text-red-600"
-                                : "text-gray-600 hover:text-red-600"
-                        }`}
-                    >
-                        DRRM
-                    </a>
-                    <a
-                        href="/news"
-                        className={`text-sm font-medium transition ${
-                            isActive("news")
-                                ? "text-red-600"
-                                : "text-gray-600 hover:text-red-600"
-                        }`}
-                    >
-                        News
-                    </a>
-                    <a
-                        href="/faqs"
-                        className={`text-sm font-medium transition ${
-                            isActive("faqs")
-                                ? "text-red-600"
-                                : "text-gray-600 hover:text-red-600"
-                        }`}
-                    >
-                        FAQs
-                    </a>
-                    <a
-                        href="/contact"
-                        className={`text-sm font-medium transition ${
-                            isActive("contact")
-                                ? "text-red-600"
-                                : "text-gray-600 hover:text-red-600"
-                        }`}
-                    >
-                        Contact
-                    </a>
-                </div>
+                        <MobileAccordion
+                            label="E-Services"
+                            items={NAV_ITEMS.eServices}
+                            isOpen={openMobileDropdown === "services"}
+                            onToggle={() => toggleMobileDropdown("services")}
+                        />
 
-                {/* MOBILE MENU BUTTON */}
-                <div className="xl:hidden flex items-center">
-                    <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="text-gray-800 hover:text-red-600 focus:outline-none transition-colors"
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? (
-                            <X size={28} />
-                        ) : (
-                            <Menu size={28} />
-                        )}
-                    </button>
-                </div>
-            </nav>
-
-            {/* MOBILE MENU DROPDOWN (ACCORDION STYLE) */}
-            {isMobileMenuOpen && (
-                <div className="absolute top-full left-0 w-full bg-white shadow-xl border-t border-gray-100 flex flex-col xl:hidden z-50 max-h-[85vh] overflow-y-auto">
-                    <a
-                        href="/"
-                        className={`px-6 py-4 text-sm font-bold transition-colors ${
-                            isActive("home")
-                                ? "text-red-600 bg-red-50 border-l-4 border-red-600"
-                                : "text-gray-800 hover:text-red-600"
-                        }`}
-                    >
-                        Home
-                    </a>
-
-                    <MobileAccordion
-                        label="The City"
-                        items={NAV_ITEMS.theCity}
-                        isOpen={openMobileDropdown === "city"}
-                        onToggle={() => toggleMobileDropdown("city")}
-                    />
-
-                    <MobileAccordion
-                        label="Government"
-                        items={NAV_ITEMS.government}
-                        isOpen={openMobileDropdown === "gov"}
-                        onToggle={() => toggleMobileDropdown("gov")}
-                    />
-
-                    <MobileAccordion
-                        label="E-Services"
-                        items={NAV_ITEMS.eServices}
-                        isOpen={openMobileDropdown === "services"}
-                        onToggle={() => toggleMobileDropdown("services")}
-                    />
-
-                    <a
-                        href="/drrm"
-                        className="px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
-                    >
-                        DRRM
-                    </a>
-                    <a
-                        href="/news"
-                        className="px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
-                    >
-                        News
-                    </a>
-                    <a
-                        href="/faqs"
-                        className="px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
-                    >
-                        FAQs
-                    </a>
-                    <a
-                        href="/contact"
-                        className="px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 transition-colors"
-                    >
-                        Contact
-                    </a>
-                </div>
-            )}
+                        <a
+                            href="/drrm"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
+                        >
+                            DRRM
+                        </a>
+                        <a
+                            href="/news"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
+                        >
+                            News
+                        </a>
+                        <a
+                            href="/faqs"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
+                        >
+                            FAQs
+                        </a>
+                        <a
+                            href="/contact"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 transition-colors"
+                        >
+                            Contact
+                        </a>
+                    </div>
+                )}
+            </div>
         </>
     );
 }
