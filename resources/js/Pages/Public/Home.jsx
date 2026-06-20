@@ -23,6 +23,9 @@ import {
     ChevronDown,
     BookOpen,
 } from "lucide-react";
+import CityMap from "../../Components/CityMap";
+import WeatherWidget from "../../Components/WeatherWidget";
+import BarangaysSection from "../../Components/BarangaysSection";
 
 // --- HERO CAROUSEL IMAGES ---
 const HERO_SLIDES = [
@@ -260,13 +263,14 @@ export default function Home() {
         <div className="min-h-screen bg-white font-sans text-gray-800">
             {/* 1. TOP BAR */}
             <div
-                className="w-full h-8 flex items-center px-6 text-white text-xs font-medium"
+                className="w-full h-8 flex items-center justify-between px-6 text-white text-xs font-medium"
                 style={{
                     background:
                         "linear-gradient(90deg, #4c1d95 0%, #dc2626 50%, #f59e0b 100%)",
                 }}
             >
-                Republic of the Philippines
+                <span>Republic of the Philippines</span>
+                <WeatherWidget />
             </div>
 
             {/* 2. NAVIGATION BAR */}
@@ -1114,6 +1118,9 @@ export default function Home() {
                 </div>
             </div>
 
+            {/* 6.5 BARANGAYS SECTION */}
+            <BarangaysSection />
+
             {/* 7. ABOUT SECTION */}
             <div className="bg-gray-50 pt-24 pb-36 border-t border-gray-200 px-6">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -1211,6 +1218,9 @@ export default function Home() {
                     </div>
                 </div>
             </div>
+
+            {/* 7.5 CITY MAP SECTION */}
+            <CityMap />
 
             {/* 8. CITY INFORMATION OFFICE BANNER */}
             <div className="relative z-20 px-6 -mt-20 mb-24 w-full flex justify-center">
