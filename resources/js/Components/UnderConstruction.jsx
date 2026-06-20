@@ -445,32 +445,11 @@ export default function UnderConstruction({
                             Cabuyao City.
                         </p>
 
-                        {/* Progress indicator */}
-                        <div className="max-w-md mx-auto mb-12">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-semibold text-amber-600">
-                                    Progress
-                                </span>
-                                <span className="text-sm font-bold text-amber-600">
-                                    65%
-                                </span>
-                            </div>
-                            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-1000"
-                                    style={{ width: "65%" }}
-                                />
-                            </div>
-                        </div>
-
                         {/* Expected Launch */}
                         {expectedLaunch && (
                             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 inline-flex items-center gap-4 mb-12">
                                 <Clock className="text-amber-600" size={24} />
                                 <div className="text-left">
-                                    <p className="text-sm text-amber-700 font-medium">
-                                        Expected Launch
-                                    </p>
                                     <p className="text-lg font-bold text-amber-900">
                                         {expectedLaunch}
                                     </p>
