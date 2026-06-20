@@ -1,0 +1,2 @@
+Temporary note: staff bulk delete route POST /staff/news/bulk-delete must be added in routes/web.php (or routes/api.php with proper prefix) mapping to App\Http\Controllers\Staff\NewsController@bulkDelete.
+
