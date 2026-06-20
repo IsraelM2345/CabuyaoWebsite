@@ -1,5 +1,5 @@
 import React from "react";
-import { MapPin, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 // List of all 18 Barangays in Cabuyao City
 const BARANGAYS = [
@@ -25,12 +25,12 @@ const BARANGAYS = [
 
 export default function BarangaysSection() {
     return (
-        <section className="w-full py-20 px-6 bg-gray-50">
+        <section className="w-full py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
             <div className="max-w-7xl mx-auto">
                 {/* Section Header */}
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                        Our <span className="text-red-600">Barangays</span>
+                        <span className="text-red-600">Barangays</span>
                     </h2>
                     <div className="flex justify-center mb-6">
                         <div className="flex h-1 w-24">
@@ -47,62 +47,49 @@ export default function BarangaysSection() {
                 </div>
 
                 {/* Barangays Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-12">
                     {BARANGAYS.map((barangay) => (
                         <a
                             key={barangay.id}
                             href={`/about#barangay-${barangay.id}`}
-                            className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-red-200 flex flex-col"
+                            className="group flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2"
                         >
-                            {/* Barangay Image */}
-                            <div className="relative aspect-square overflow-hidden bg-gray-100">
+                            {/* Fixed Structure: Borders removed. Clean circle with exact dimensions. */}
+                            <div className="w-32 h-32 sm:w-40 sm:h-40 mb-4 rounded-full overflow-hidden bg-gray-100 relative shadow-md group-hover:shadow-xl transition-shadow duration-300">
                                 <img
-                                    src={`/images/barangays/${barangay.image}.jpg`}
+                                    src={`/images/barangay/${barangay.image}.jpg`}
                                     alt={barangay.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     onError={(e) => {
-                                        // Fallback to a generic barangay image or gradient
-                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(barangay.name)}&background=DC2626&color=fff&size=200&bold=true`;
+                                        // Fallback to UI Avatars with barangay initials
+                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                            barangay.name,
+                                        )}&background=0033A0&color=fff&size=200&bold=true&font-size=0.4`;
                                     }}
                                 />
-                                {/* Overlay on hover */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                {/* Subtle hover overlay */}
+                                <div className="absolute inset-0 bg-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                             </div>
 
-                            {/* Barangay Name */}
-                            <div className="p-3 text-center flex-grow flex flex-col justify-center">
-                                <div className="flex items-center justify-center gap-1.5 mb-1">
-                                    <MapPin
-                                        size={14}
-                                        className="text-red-500 group-hover:text-red-600"
-                                    />
-                                    <h3 className="font-bold text-sm text-gray-900 group-hover:text-red-600 transition-colors">
-                                        {barangay.name}
-                                    </h3>
+                            {/* Centered Label underneath */}
+                            <h3 className="font-semibold text-sm sm:text-base text-gray-800 group-hover:text-blue-700 transition-colors duration-300 leading-tight px-2 flex flex-col items-center">
+                                {barangay.name}
+                                {/* Decorative tri-color underline on hover */}
+                                <div className="w-0 h-0.5 mt-1 group-hover:w-12 transition-all duration-300 rounded-full flex overflow-hidden">
+                                    <div className="w-1/3 h-full bg-blue-600"></div>
+                                    <div className="w-1/3 h-full bg-yellow-400"></div>
+                                    <div className="w-1/3 h-full bg-red-600"></div>
                                 </div>
-                                <p className="text-[10px] text-gray-500">
-                                    Barangay
-                                </p>
-                            </div>
-
-                            {/* Hover arrow indicator */}
-                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center">
-                                    <ArrowRight
-                                        size={14}
-                                        className="text-white"
-                                    />
-                                </div>
-                            </div>
+                            </h3>
                         </a>
                     ))}
                 </div>
 
                 {/* View All Link */}
-                <div className="text-center mt-12">
+                <div className="text-center mt-16">
                     <a
                         href="/about#barangays"
-                        className="inline-flex items-center gap-2 text-red-600 font-bold hover:text-red-700 transition-colors group"
+                        className="inline-flex items-center gap-2 text-blue-800 font-bold hover:text-blue-600 transition-colors group bg-blue-50 px-6 py-3 rounded-full"
                     >
                         <span>Learn more about our barangays</span>
                         <ArrowRight

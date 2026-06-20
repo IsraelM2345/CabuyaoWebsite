@@ -693,7 +693,7 @@ export default function Home() {
                             <ArrowRight size={18} strokeWidth={2.5} />
                         </button>
                         <a
-                            href="/about"
+                            href="#about-section"
                             className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white font-bold px-8 py-3.5 rounded-xl hover:bg-white/10 transition w-full sm:w-auto backdrop-blur-sm"
                         >
                             Learn More
@@ -1122,7 +1122,10 @@ export default function Home() {
             <BarangaysSection />
 
             {/* 7. ABOUT SECTION */}
-            <div className="bg-gray-50 pt-24 pb-36 border-t border-gray-200 px-6">
+            <div
+                id="about-section"
+                className="bg-gray-50 pt-24 pb-36 border-t border-gray-200 px-6"
+            >
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                     {/* --- LEFT SIDE: SINGLE TALL IMAGE --- */}
                     <div className="rounded-3xl overflow-hidden relative shadow-lg h-[400px] lg:h-[650px] w-full bg-gray-200">
