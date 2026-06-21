@@ -370,8 +370,12 @@ export default function StaffRegister() {
                 <div className="w-full max-w-lg">
                     {/* Mobile logo */}
                     <div className="lg:hidden flex items-center mb-8">
-                        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center border-2 border-red-200">
-                            <Building2 className="text-red-600" size={20} />
+                        <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center border-2 border-yellow-400 p-0.5">
+                            <img
+                                src="/images/cab-logo1.png"
+                                alt="Cabuyao City Logo"
+                                className="w-full h-full rounded-full object-cover"
+                            />
                         </div>
                         <div className="ml-2">
                             <div className="font-bold text-xl text-gray-900">

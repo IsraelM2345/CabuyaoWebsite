@@ -657,23 +657,31 @@ export default function Home() {
                         </div>
                     </h3>
                 </div>
-                <div className="relative max-w-7xl mx-auto px-12 md:px-16 group">
+                <div className="relative max-w-7xl mx-auto px-12 md:px-16">
                     <button
                         id="btn-prev-councilor"
                         onClick={() => {
                             const slider =
                                 document.getElementById("councilor-slider");
-                            slider.scrollBy({
-                                left: -slider.offsetWidth,
-                                behavior: "smooth",
-                            });
+                            if (slider.scrollLeft <= 10) {
+                                // Scroll to end for infinite loop
+                                slider.scrollTo({
+                                    left: slider.scrollWidth,
+                                    behavior: "smooth",
+                                });
+                            } else {
+                                slider.scrollBy({
+                                    left: -slider.offsetWidth,
+                                    behavior: "smooth",
+                                });
+                            }
                         }}
-                        className="absolute left-0 md:left-2 top-[40%] -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-[#1e293b] shadow-xl border-2 border-white flex items-center justify-center text-white hover:bg-red-600 hover:border-red-600 hover:scale-110 transition-all duration-300 focus:outline-none opacity-0 md:opacity-0 group-hover:opacity-100 pointer-events-none"
+                        className="absolute left-0 md:left-2 top-[40%] -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 transition-all duration-300 focus:outline-none"
                         aria-label="Scroll left"
                     >
                         <ChevronLeft
                             size={24}
-                            strokeWidth={2.5}
+                            strokeWidth={2}
                             className="mr-0.5"
                         />
                     </button>
@@ -778,17 +786,28 @@ export default function Home() {
                         onClick={() => {
                             const slider =
                                 document.getElementById("councilor-slider");
-                            slider.scrollBy({
-                                left: slider.offsetWidth,
-                                behavior: "smooth",
-                            });
+                            if (
+                                slider.scrollLeft + slider.clientWidth >=
+                                slider.scrollWidth - 10
+                            ) {
+                                // Scroll to start for infinite loop
+                                slider.scrollTo({
+                                    left: 0,
+                                    behavior: "smooth",
+                                });
+                            } else {
+                                slider.scrollBy({
+                                    left: slider.offsetWidth,
+                                    behavior: "smooth",
+                                });
+                            }
                         }}
-                        className="absolute right-0 md:right-2 top-[40%] -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-[#1e293b] shadow-xl border-2 border-white flex items-center justify-center text-white hover:bg-red-600 hover:border-red-600 hover:scale-110 transition-all duration-300 focus:outline-none opacity-0 md:opacity-0 group-hover:opacity-100"
+                        className="absolute right-0 md:right-2 top-[40%] -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-105 transition-all duration-300 focus:outline-none"
                         aria-label="Scroll right"
                     >
                         <ChevronRight
                             size={24}
-                            strokeWidth={2.5}
+                            strokeWidth={2}
                             className="ml-0.5"
                         />
                     </button>
@@ -905,7 +924,7 @@ export default function Home() {
             <CityMap />
 
             {/* 8. CITY INFORMATION OFFICE BANNER */}
-            <div className="relative z-20 px-6 -mt-20 mb-24 w-full flex justify-center">
+            <div className="relative z-20 px-6 -mt-2 mb-24 w-full flex justify-center">
                 <div className="w-full max-w-5xl group">
                     <img
                         src="/images/city-office-info.png"

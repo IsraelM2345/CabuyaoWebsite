@@ -137,11 +137,28 @@ export default function StaffLogin() {
                             </div>
                         </div>
                     </div>
-
                     <div className="mt-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-yellow-400/20 flex items-center justify-center border border-yellow-400/30">
-                                <Shield className="text-yellow-400" size={24} />
+                        <p className="text-red-100 text-base leading-relaxed mb-6">
+                            Secure access to the City of Cabuyao's internal
+                            management system. Manage operations, services, and
+                            citizen engagement from a unified dashboard.
+                        </p>
+
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3 text-red-100 text-sm">
+                                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                    </svg>
+                                </div>
+                                <span>Secure government authentication</span>
                             </div>
                             <div className="flex items-center gap-3 text-red-100 text-sm">
                                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
@@ -206,8 +223,12 @@ export default function StaffLogin() {
                 <div className="w-full max-w-md">
                     {/* Mobile logo */}
                     <div className="lg:hidden flex items-center mb-8">
-                        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center border-2 border-red-200">
-                            <Building2 className="text-red-600" size={20} />
+                        <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center border-2 border-yellow-400 p-0.5">
+                            <img
+                                src="/images/cab-logo1.png"
+                                alt="Cabuyao City Logo"
+                                className="w-full h-full rounded-full object-cover"
+                            />
                         </div>
                         <div className="ml-2">
                             <div className="font-bold text-xl text-gray-900">
@@ -551,7 +572,6 @@ export default function StaffLogin() {
                                     "linear-gradient(90deg, #dc2626, #b91c1c)",
                             }}
                         >
-                            <Shield size={16} />
                             Sign In
                         </button>
                     </form>
