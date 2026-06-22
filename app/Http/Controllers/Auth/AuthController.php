@@ -28,10 +28,10 @@ class AuthController extends Controller
             $middleInitial = isset($validated['middleName']) ? ' ' . substr($validated['middleName'], 0, 1) . '.' : '';
             $name = trim($validated['firstName'] . ' ' . $middleInitial . ' ' . $validated['lastName']);
 
-            $user = User::create([
+                        $user = User::create([
                 'name' => $name,
                 'email' => Str::lower($validated['email']),
-                'password' => bcrypt($validated['password']),
+                'password' => $validated['password'],
             ]);
 
             return response()->json([

@@ -179,6 +179,31 @@ export default function About() {
                 </div>
             </div>
 
+            {/* MAP SECTION */}
+            <div className="max-w-7xl mx-auto px-6 pb-24">
+                <div className="flex items-center gap-3 mb-8">
+                    <MapPin
+                        className="text-blue-700"
+                        size={32}
+                        strokeWidth={2}
+                    />
+                    <h2 className="text-3xl font-bold text-[#0f172a]">
+                        Location Map
+                    </h2>
+                </div>
+                <div className="rounded-3xl overflow-hidden shadow-lg bg-white">
+                    <img
+                        src="/images/barangay/Map_of_Cabuyao.jpg"
+                        alt="Map of Cabuyao City"
+                        className="w-full h-auto"
+                        onError={(e) =>
+                            (e.target.src =
+                                "https://via.placeholder.com/1200x600?text=Map+of+Cabuyao")
+                        }
+                    />
+                </div>
+            </div>
+
             <PublicFooter />
         </div>
     );

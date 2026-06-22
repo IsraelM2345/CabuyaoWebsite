@@ -17,6 +17,7 @@ class PublicExecutive extends Model
         'email',
         'phone',
         'office',
+        'address',
         'term_start',
         'term_end',
         'election_date',
@@ -26,8 +27,8 @@ class PublicExecutive extends Model
         'education',
         'expertise',
         'quote',
-        'photo_path',
         'facebook_url',
+        'photo_path',
         'order_column',
         'is_active',
     ];

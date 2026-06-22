@@ -34,6 +34,7 @@ export default function OfficialsExecutive() {
         email: "",
         phone: "",
         office: "",
+        address: "",
         termStart: "",
         termEnd: "",
         election_date: "",
@@ -49,6 +50,22 @@ export default function OfficialsExecutive() {
     const [photoPreview, setPhotoPreview] = useState(null);
     const [isAddingNew, setIsAddingNew] = useState(false);
     const fileInputRef = useRef(null);
+
+    // Helper to check which positions are already filled
+    const hasMayor = executives.some((e) => e.position === "City Mayor");
+    const hasViceMayor = executives.some((e) => e.position === "Vice Mayor");
+
+    // Get available positions for the dropdown when adding new
+    const getAvailablePositions = () => {
+        const positions = [];
+        if (!hasMayor) positions.push("City Mayor");
+        if (!hasViceMayor) positions.push("Vice Mayor");
+        return positions;
+    };
+
+    // Check if all positions are filled (no more can be added)
+    // There can only be 2 executives: 1 Mayor and 1 Vice Mayor
+    const allPositionsFilled = executives.length >= 2;
 
     // Fetch executives from API and check for edit mode
     useEffect(() => {
@@ -102,14 +119,23 @@ export default function OfficialsExecutive() {
     };
 
     const handleAddNew = () => {
+        const availablePositions = getAvailablePositions();
+        if (availablePositions.length === 0) {
+            alert(
+                "All executive positions are already filled. Please edit existing officials or delete one before adding a new one.",
+            );
+            return;
+        }
+
         setEditingId("new");
         setIsAddingNew(true);
         setFormData({
             name: "",
-            position: "City Mayor",
+            position: availablePositions[0], // Default to first available position
             email: "",
             phone: "",
             office: "",
+            address: "",
             termStart: "",
             termEnd: "",
             election_date: "",
@@ -133,6 +159,7 @@ export default function OfficialsExecutive() {
             email: official.email || "",
             phone: official.phone || "",
             office: official.office || "",
+            address: official.address || "",
             termStart: official.termStart || "",
             termEnd: official.termEnd || "",
             election_date: official.election_date || "",
@@ -157,6 +184,7 @@ export default function OfficialsExecutive() {
             email: "",
             phone: "",
             office: "",
+            address: "",
             termStart: "",
             termEnd: "",
             election_date: "",
@@ -222,6 +250,7 @@ export default function OfficialsExecutive() {
                     email: formData.email,
                     phone: formData.phone,
                     office: formData.office,
+                    address: formData.address,
                     termStart: formData.termStart,
                     termEnd: formData.termEnd,
                     election_date: formData.election_date,
@@ -373,12 +402,16 @@ export default function OfficialsExecutive() {
                                             }
                                             className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                                         >
-                                            <option value="City Mayor">
-                                                City Mayor
-                                            </option>
-                                            <option value="Vice Mayor">
-                                                Vice Mayor
-                                            </option>
+                                            {getAvailablePositions().map(
+                                                (pos) => (
+                                                    <option
+                                                        key={pos}
+                                                        value={pos}
+                                                    >
+                                                        {pos}
+                                                    </option>
+                                                ),
+                                            )}
                                         </select>
                                     </div>
                                     <div>
@@ -429,6 +462,23 @@ export default function OfficialsExecutive() {
                                                 })
                                             }
                                             placeholder="Office of the City Mayor"
+                                            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
+                                            Address
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.address}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    address: e.target.value,
+                                                })
+                                            }
+                                            placeholder="City Hall, Cabuyao City"
                                             className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                                         />
                                     </div>
@@ -705,8 +755,7 @@ export default function OfficialsExecutive() {
                                             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
                                                 Position
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 value={formData.position}
                                                 onChange={(e) =>
                                                     setFormData({
@@ -716,7 +765,72 @@ export default function OfficialsExecutive() {
                                                     })
                                                 }
                                                 className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                            />
+                                            >
+                                                {(() => {
+                                                    const currentOfficial =
+                                                        executives.find(
+                                                            (e) =>
+                                                                e.id ===
+                                                                editingId,
+                                                        );
+                                                    const positions = [];
+
+                                                    // Always include current position
+                                                    if (currentOfficial) {
+                                                        positions.push(
+                                                            currentOfficial.position,
+                                                        );
+                                                    }
+
+                                                    // Add other available positions (not occupied by others)
+                                                    // Only add City Mayor if not occupied by someone else AND not already in list
+                                                    if (
+                                                        !executives.some(
+                                                            (e) =>
+                                                                e.position ===
+                                                                    "City Mayor" &&
+                                                                e.id !==
+                                                                    editingId,
+                                                        ) &&
+                                                        !positions.includes(
+                                                            "City Mayor",
+                                                        )
+                                                    ) {
+                                                        positions.push(
+                                                            "City Mayor",
+                                                        );
+                                                    }
+
+                                                    // Only add Vice Mayor if not occupied by someone else AND not already in list
+                                                    if (
+                                                        !executives.some(
+                                                            (e) =>
+                                                                e.position ===
+                                                                    "Vice Mayor" &&
+                                                                e.id !==
+                                                                    editingId,
+                                                        ) &&
+                                                        !positions.includes(
+                                                            "Vice Mayor",
+                                                        )
+                                                    ) {
+                                                        positions.push(
+                                                            "Vice Mayor",
+                                                        );
+                                                    }
+
+                                                    return positions.map(
+                                                        (pos) => (
+                                                            <option
+                                                                key={pos}
+                                                                value={pos}
+                                                            >
+                                                                {pos}
+                                                            </option>
+                                                        ),
+                                                    );
+                                                })()}
+                                            </select>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
@@ -747,6 +861,23 @@ export default function OfficialsExecutive() {
                                                         phone: e.target.value,
                                                     })
                                                 }
+                                                className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
+                                                Address
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.address}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        address: e.target.value,
+                                                    })
+                                                }
+                                                placeholder="City Hall, Cabuyao City"
                                                 className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                                             />
                                         </div>
@@ -1145,11 +1276,22 @@ export default function OfficialsExecutive() {
                         <div className="space-y-2">
                             <button
                                 onClick={handleAddNew}
-                                className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition"
+                                disabled={allPositionsFilled}
+                                className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
+                                    allPositionsFilled
+                                        ? "bg-gray-300 dark:bg-slate-600 text-gray-500 dark:text-slate-400 cursor-not-allowed"
+                                        : "bg-red-600 hover:bg-red-700 text-white"
+                                }`}
                             >
                                 <Plus size={16} />
                                 Add New Official
                             </button>
+                            {allPositionsFilled && (
+                                <p className="text-xs text-gray-500 dark:text-slate-400 text-center">
+                                    Both Mayor and Vice Mayor positions are
+                                    filled
+                                </p>
+                            )}
                             <button
                                 onClick={() => window.open("/mayor", "_blank")}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-600 transition"

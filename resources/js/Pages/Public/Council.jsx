@@ -572,6 +572,7 @@ export default function Council() {
                                     `https://ui-avatars.com/api/?name=${encodeURIComponent(viceMayor.name)}&background=0D9488&color=fff&size=400`,
                                 education: viceMayor.education || "",
                                 birthday: "",
+                                address: viceMayor.address || "",
                                 election_date: viceMayor.election_date,
                                 assumption_date: viceMayor.assumption_date,
                                 chairmanships: [],
@@ -755,14 +756,14 @@ export default function Council() {
 
                                 {/* Info Pills - Centered */}
                                 <div className="flex flex-wrap items-center justify-center gap-3">
-                                    {selectedCouncilor.education && (
+                                    {selectedCouncilor.address && (
                                         <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm border border-white/50">
-                                            <GraduationCap
+                                            <MapPin
                                                 size={16}
                                                 className="text-blue-500 flex-shrink-0"
                                             />
                                             <span className="font-medium text-sm text-gray-700">
-                                                {selectedCouncilor.education}
+                                                {selectedCouncilor.address}
                                             </span>
                                         </div>
                                     )}
@@ -840,6 +841,53 @@ export default function Council() {
                                         <p className="text-gray-700 leading-relaxed">
                                             {selectedCouncilor.bio}
                                         </p>
+                                    </div>
+                                )}
+
+                                {/* Education */}
+                                {selectedCouncilor.education && (
+                                    <div className="bg-gray-50 rounded-2xl p-5">
+                                        <h4 className="flex items-center gap-3 font-bold text-gray-900 mb-4 text-lg">
+                                            <div className="p-2 bg-blue-100 rounded-lg">
+                                                <GraduationCap
+                                                    size={20}
+                                                    className="text-blue-600"
+                                                />
+                                            </div>
+                                            Educational Background
+                                        </h4>
+                                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            {Array.isArray(
+                                                selectedCouncilor.education,
+                                            )
+                                                ? selectedCouncilor.education.map(
+                                                      (edu, idx) => (
+                                                          <li
+                                                              key={idx}
+                                                              className="flex items-start gap-2.5 bg-white rounded-lg px-3.5 py-2.5 shadow-sm border border-gray-100"
+                                                          >
+                                                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></span>
+                                                              <span className="text-gray-700 text-sm font-medium leading-relaxed">
+                                                                  {edu}
+                                                              </span>
+                                                          </li>
+                                                      ),
+                                                  )
+                                                : selectedCouncilor.education
+                                                      .split("\n")
+                                                      .filter((e) => e.trim())
+                                                      .map((edu, idx) => (
+                                                          <li
+                                                              key={idx}
+                                                              className="flex items-start gap-2.5 bg-white rounded-lg px-3.5 py-2.5 shadow-sm border border-gray-100"
+                                                          >
+                                                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></span>
+                                                              <span className="text-gray-700 text-sm font-medium leading-relaxed">
+                                                                  {edu.trim()}
+                                                              </span>
+                                                          </li>
+                                                      ))}
+                                        </ul>
                                     </div>
                                 )}
 
