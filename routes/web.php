@@ -99,39 +99,35 @@ Route::get('/health', function () {
 // AUTHENTICATION — Login & Register (guest only)
 // ══════════════════════════════════════════════════════════════════════════════
 
-Route::get('/login', function () {
+Route::get('/evactech/login', function () {
     return Inertia::render('Auth/EvacTechLogin');
-})->name('login');
+})->name('evactech.login');
+
+Route::get('/evactech/register', function () {
+    return Inertia::render('Auth/EvacTechRegister');
+})->name('evactech.register');
+
+Route::post('/evactech/register', [AuthController::class, 'evactech.register'])->name('register.submit');
+// Rate limited login (5 attempts per minute) to prevent brute force
+Route::post('/evactech/login', [AuthController::class, 'evactech.login'])->middleware('throttle:5,1')->name('login.submit');
 
 // Staff-specific login page (separate from EvacTech)
 Route::get('/staff/login', function () {
     return Inertia::render('Staff/StaffLogin');
 })->name('staff.login');
 
-// Debug route to check database content
-Route::get('/debug-dashboard', function () {
-    $news = App\Models\PublicNews::all();
-    $announcements = App\Models\PublicAnnouncement::all();
-    
-    return response()->json([
-        'news_count' => $news->count(),
-        'news' => $news->map(fn($n) => ['id' => $n->id, 'title' => $n->title, 'status' => $n->status]),
-        'announcements_count' => $announcements->count(),
-        'announcements' => $announcements->map(fn($a) => ['id' => $a->id, 'title' => $a->title, 'status' => $a->status]),
-    ]);
-});
+// Debug route removed for security - use Laravel Telescope or proper logging in production
 
 // Staff registration page (separate from EvacTech)
 Route::get('/staff/register', function () {
     return Inertia::render('Staff/StaffRegister');
 })->name('staff.register');
 
-Route::get('/register', function () {
-    return Inertia::render('Auth/EvacTechRegister');
-})->name('register');
 
-Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
-Route::post('/login',    [AuthController::class, 'login'])->name('login.submit');
+Route::post('/staff/register', [AuthController::class, 'register'])->name('staff.register.submit');
+// Rate limited login (5 attempts per minute) to prevent brute force
+Route::post('/staff/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PROTECTED — Staff / Admin (requires authentication) this is for Evacuation Management System Only

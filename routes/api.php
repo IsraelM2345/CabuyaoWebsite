@@ -40,7 +40,8 @@ Route::prefix('public')->group(function () {
     Route::get('/announcements', [PublicAnnouncementsController::class, 'index']);
     Route::get('/announcements/{announcement}', [PublicAnnouncementsController::class, 'show']);
 
-    Route::post('/contact', [ContactController::class, 'store']);
+    // Rate limited to prevent spam (10 submissions per minute)
+    Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/contact/{contactMessage}', [PublicContactMessageLookupController::class, 'show']);
 });
 

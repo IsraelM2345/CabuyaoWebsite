@@ -8,8 +8,8 @@ import {
     Building2,
     Shield,
     CheckCircle2,
-    X,
     AlertCircle,
+    X,
 } from "lucide-react";
 
 /**
@@ -21,6 +21,7 @@ import {
 export default function StaffRegister() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const [form, setForm] = useState({
         firstName: "",
         lastName: "",
@@ -31,6 +32,7 @@ export default function StaffRegister() {
         password: "",
         password_confirmation: "",
     });
+
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -38,6 +40,32 @@ export default function StaffRegister() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
+
+    const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+
+    const hardHideLoader = () => {
+        window.dispatchEvent(new Event("global:loader-hide"));
+    };
+
+    const showLoader = () => {
+        window.dispatchEvent(new Event("global:loader"));
+    };
+
+    const parseRegistrationError = (data) => {
+        // data can be: { message }, { errors: {field: [..]} }, or anything else.
+        if (data && typeof data === "object") {
+            if (data.message) return data.message;
+
+            if (data.errors && typeof data.errors === "object") {
+                const values = Object.values(data.errors);
+                if (values.length) {
+                    return values.flat().filter(Boolean).join("\n");
+                }
+            }
+        }
+
+        return "Registration failed";
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -59,6 +87,7 @@ export default function StaffRegister() {
         }
 
         setLoading(true);
+        showLoader();
 
         const payload = {
             firstName: form.firstName.trim(),
@@ -69,11 +98,11 @@ export default function StaffRegister() {
             department: form.department.trim(),
             password: form.password,
             password_confirmation: form.password_confirmation,
-            role: "staff", // Default role for web portal staff
+            role: "staff",
         };
 
         try {
-            const res = await fetch("/register", {
+            const res = await fetch("/staff/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -85,35 +114,69 @@ export default function StaffRegister() {
                 body: JSON.stringify(payload),
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
 
             if (!res.ok) {
-                // Extract error messages
-                const errorMsg =
-                    data.message || data.errors
-                        ? Object.values(data.errors).flat().join("\n")
-                        : "Registration failed";
+                let errorMsg = "Registration failed";
+
+                try {
+                    if (data && typeof data === "object") {
+                        // Prefer API-provided message if present
+                        if (
+                            typeof data.message === "string" &&
+                            data.message.trim()
+                        ) {
+                            errorMsg = data.message;
+                        } else if (
+                            data.errors &&
+                            data.errors !== null &&
+                            typeof data.errors === "object"
+                        ) {
+                            // Only read Object.values when data.errors is a non-null object
+                            const values = Object.values(data.errors);
+                            if (Array.isArray(values) && values.length) {
+                                const flattened = values.flat();
+                                if (Array.isArray(flattened)) {
+                                    const lines = flattened
+                                        .filter(Boolean)
+                                        .map((v) => String(v));
+                                    if (lines.length)
+                                        errorMsg = lines.join("\n");
+                                }
+                            }
+                        }
+                    }
+                } catch {
+                    // Never throw while parsing registration errors
+                    errorMsg = "Registration failed";
+                }
+
                 setModalMessage(errorMsg);
                 setShowErrorModal(true);
                 throw new Error(errorMsg);
             }
 
-            // Registration successful - show success modal
             setModalMessage(
                 "Your account has been created successfully! You can now sign in with your credentials.",
             );
             setShowSuccessModal(true);
+
+            // Stop loader before showing modal
+            hardHideLoader();
         } catch (err) {
-            if (err.message !== "Registration failed") {
-                setModalMessage(err.message);
+            // If we already set modalMessage above, just ensure modal is visible.
+            if (!showErrorModal) {
+                const msg = err?.message || "Registration failed";
+                setModalMessage(msg);
                 setShowErrorModal(true);
             }
+
+            hardHideLoader();
         } finally {
             setLoading(false);
+            hardHideLoader();
         }
     };
-
-    const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
     return (
         <div className="min-h-screen flex font-sans">
@@ -131,7 +194,6 @@ export default function StaffRegister() {
                         className="relative w-full max-w-sm mx-4 rounded-2xl overflow-hidden shadow-2xl bg-white transition-colors"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Top accent bar */}
                         <div
                             className="h-1 w-full"
                             style={{
@@ -201,7 +263,6 @@ export default function StaffRegister() {
                         className="relative w-full max-w-sm mx-4 rounded-2xl overflow-hidden shadow-2xl bg-white transition-colors"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Top accent bar */}
                         <div
                             className="h-1 w-full"
                             style={{
@@ -355,9 +416,9 @@ export default function StaffRegister() {
 
                 <div className="relative z-10">
                     <div className="flex h-1 w-24 mb-4">
-                        <div className="w-1/3 h-full bg-blue-500"></div>
-                        <div className="w-1/3 h-full bg-yellow-400"></div>
-                        <div className="w-1/3 h-full bg-red-500"></div>
+                        <div className="w-1/3 h-full bg-blue-500" />
+                        <div className="w-1/3 h-full bg-yellow-400" />
+                        <div className="w-1/3 h-full bg-red-500" />
                     </div>
                     <p className="text-red-200 text-sm">
                         © 2026 City of Cabuyao. All rights reserved.
@@ -368,7 +429,6 @@ export default function StaffRegister() {
             {/* Right Panel - Registration Form */}
             <div className="flex-1 flex items-center justify-center bg-white px-8 py-12">
                 <div className="w-full max-w-lg">
-                    {/* Mobile logo */}
                     <div className="lg:hidden flex items-center mb-8">
                         <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center border-2 border-yellow-400 p-0.5">
                             <img
@@ -416,7 +476,6 @@ export default function StaffRegister() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Name Fields - Split into First and Last */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -437,6 +496,7 @@ export default function StaffRegister() {
                                     />
                                 </div>
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                     Last Name{" "}
@@ -454,7 +514,6 @@ export default function StaffRegister() {
                             </div>
                         </div>
 
-                        {/* Middle Name */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Middle Name
@@ -470,7 +529,6 @@ export default function StaffRegister() {
                             </div>
                         </div>
 
-                        {/* Email */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Email Address
@@ -490,7 +548,6 @@ export default function StaffRegister() {
                             </div>
                         </div>
 
-                        {/* Position */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Position / Title

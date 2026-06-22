@@ -4,10 +4,14 @@ import PublicHeader from "../../Components/PublicHeader";
 import PublicFooter from "../../Components/PublicFooter";
 export default function Registry() {
     return (
-        <UnderConstruction
-            serviceName="Civil Registry"
-            description="Online access to birth certificates, marriage certificates, and other civil registry documents."
-            expectedLaunch="Coming Soon"
-        />
+        <>
+            <PublicHeader activatePage="services" />
+            <UnderConstruction
+                serviceName="Civil Registry"
+                description="Online access to birth certificates, marriage certificates, and other civil registry documents."
+                expectedLaunch="Coming Soon"
+            />
+            <PublicFooter />
+        </>
     );
 }

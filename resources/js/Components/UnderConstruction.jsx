@@ -20,8 +20,6 @@ export default function UnderConstruction({
 }) {
     return (
         <div className="min-h-screen bg-white font-sans text-gray-800">
-            <PublicHeader activePage="home" />
-
             {/* 1. HERO BANNER - Under Construction Theme */}
             <div className="relative w-full h-[280px] md:h-[380px] flex items-center bg-gradient-to-br from-amber-900 via-orange-800 to-yellow-700 overflow-hidden">
                 {/* Animated background pattern */}
@@ -174,8 +172,6 @@ export default function UnderConstruction({
                     </div>
                 </div>
             </div>
-
-            <PublicFooter />
         </div>
     );
 }

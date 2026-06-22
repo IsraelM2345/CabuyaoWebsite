@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -15,23 +17,43 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         try {
+            // Normalize email before validation to ensure case-insensitive uniqueness.
+            $rawEmail = $request->input('email');
+            $normalizedEmail = is_string($rawEmail) ? Str::lower(trim($rawEmail)) : $rawEmail;
+
+            $request->merge([
+                'email' => $normalizedEmail,
+            ]);
+
             $validated = $request->validate([
                 'firstName' => ['required', 'string', 'max:255'],
                 'lastName' => ['required', 'string', 'max:255'],
                 'middleName' => ['nullable', 'string', 'max:255'],
-                'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+                'email' => ['required', 'email', 'max:255'],
                 'position' => ['nullable', 'string', 'max:255'],
                 'department' => ['nullable', 'string', 'max:255'],
                 'password' => ['required', 'string', 'min:8', 'confirmed'],
             ]);
 
-            $middleInitial = isset($validated['middleName']) ? ' ' . substr($validated['middleName'], 0, 1) . '.' : '';
+            $email = Str::lower(trim($validated['email']));
+
+            // Explicit duplicate-email check with a clear contract.
+            if (User::query()->where('email', $email)->exists()) {
+                return response()->json([
+                    'message' => 'This email is already registered.',
+                ], 409);
+            }
+
+            $middleInitial = isset($validated['middleName']) && $validated['middleName'] !== ''
+                ? ' ' . substr($validated['middleName'], 0, 1) . '.'
+                : '';
             $name = trim($validated['firstName'] . ' ' . $middleInitial . ' ' . $validated['lastName']);
 
-                        $user = User::create([
+            $user = User::create([
                 'name' => $name,
-                'email' => Str::lower($validated['email']),
-                'password' => $validated['password'],
+                'email' => $email,
+                'password' => Hash::make($validated['password']),
+                // role / position / department are currently not stored in users table.
             ]);
 
             return response()->json([
@@ -48,11 +70,17 @@ class AuthController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Registration error: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'line' => $e->getLine(),
+            ]);
+
             return response()->json([
-                'message' => 'Registration failed: ' . $e->getMessage()
+                'message' => 'Registration failed. Please try again or contact support if the problem persists.'
             ], 500);
         }
     }
+
 
     public function login(Request $request)
     {

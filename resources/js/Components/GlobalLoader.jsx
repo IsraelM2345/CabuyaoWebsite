@@ -90,6 +90,54 @@ export default function GlobalLoader() {
     }, []);
 
     useEffect(() => {
+        // Manual loader triggers (for fetch-based flows like StaffLogin)
+        const onShow = () => {
+            // Force show immediately
+            visibleRef.current = true;
+            progressRef.current = 0;
+            setVisible(true);
+            setProgress(0);
+
+            if (progressIntervalRef.current)
+                clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = setInterval(() => {
+                if (progressRef.current < 60) {
+                    updateProgress(progressRef.current + Math.random() * 8);
+                }
+            }, 150);
+        };
+
+        const onHide = () => {
+            if (progressIntervalRef.current)
+                clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+            hideLoader();
+        };
+
+        const onHardHide = () => {
+            // Hard stop: immediately remove overlay and reset timers/state
+            if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
+            if (forceHideTimeoutRef.current)
+                clearTimeout(forceHideTimeoutRef.current);
+
+            if (progressIntervalRef.current)
+                clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+
+            visibleRef.current = false;
+            progressRef.current = 0;
+            setVisible(false);
+            setProgress(0);
+
+            showTimeoutRef.current = null;
+            forceHideTimeoutRef.current = null;
+        };
+
+        window.addEventListener("inertia:start", onShow);
+        window.addEventListener("global:loader", onShow);
+        window.addEventListener("inertia:finish", onHide);
+        window.addEventListener("global:loader-hide", onHardHide);
+
         // Inertia navigation start
         const unsubscribeNavigate = router.on("navigate", () => {
             navigateStartRef.current = Date.now();
@@ -154,6 +202,11 @@ export default function GlobalLoader() {
 
         // Cleanup
         return () => {
+            window.removeEventListener("inertia:start", onShow);
+            window.removeEventListener("global:loader", onShow);
+            window.removeEventListener("inertia:finish", onHide);
+            window.removeEventListener("global:loader-hide", onHardHide);
+
             unsubscribeNavigate();
             unsubscribeProgress();
             unsubscribeFinish();
@@ -208,7 +261,7 @@ export default function GlobalLoader() {
                     <img
                         src="/images/cab-logo1.png"
                         alt="Cabuyao City Logo"
-                        className="w-16 h-16 object-contain drop-shadow-lg animate-pulse"
+                        className="w-20 h-20 object-contain drop-shadow-lg animate-pulse"
                     />
                 </div>
             </div>

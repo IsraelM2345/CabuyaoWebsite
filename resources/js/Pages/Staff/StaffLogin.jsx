@@ -1,17 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Mail,
     Lock,
     Eye,
     EyeOff,
-    Shield,
-    Building2,
     CheckCircle2,
     AlertCircle,
     X,
 } from "lucide-react";
-
-import { useEffect } from "react";
 
 export default function StaffLogin() {
     const [showPassword, setShowPassword] = useState(false);
@@ -23,35 +19,35 @@ export default function StaffLogin() {
     const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
-        // Check for success message from registration redirect
         const params = new URLSearchParams(window.location.search);
         if (params.get("registered") === "true") {
             setSuccess(
                 "Account created successfully! Please sign in with your credentials.",
             );
-            // Clean up URL
             window.history.replaceState({}, document.title, "/staff/login");
         }
     }, []);
 
+    const handleRedirectAfterSuccess = () => {
+        if (isRedirecting) return;
+        setIsRedirecting(true);
+        setLoginSuccess(false);
+        window.location.href = "/staff/dashboard";
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Prevent double submission
-        if (isLoggingIn || isRedirecting) {
-            return;
-        }
+        if (isLoggingIn || isRedirecting) return;
 
         setError("");
         setIsLoggingIn(true);
 
-        const payload = {
-            email: form.email,
-            password: form.password,
-        };
+        // Show GlobalLoader immediately
+        window.dispatchEvent(new Event("inertia:start"));
+        window.dispatchEvent(new Event("global:loader"));
 
         try {
-            const res = await fetch("/login", {
+            const res = await fetch("/staff/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -61,10 +57,13 @@ export default function StaffLogin() {
                         .querySelector('meta[name="csrf-token"]')
                         ?.getAttribute("content"),
                 },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    email: form.email,
+                    password: form.password,
+                }),
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
 
             if (!res.ok) {
                 console.error("Login failed", data);
@@ -72,20 +71,24 @@ export default function StaffLogin() {
                     data.message ||
                         "Invalid credentials. Please check your email and password.",
                 );
+
+                // Hard stop loader (success/failure modal should take over)
+                window.dispatchEvent(new Event("global:loader-hide"));
+
                 setIsLoggingIn(false);
                 return;
             }
 
-            // Login successful - show success modal
             setLoginSuccess(true);
             setIsLoggingIn(false);
 
-            // Auto-redirect after showing success modal
+            // Stop loader before showing modal/redirect
+            window.dispatchEvent(new Event("global:loader-hide"));
+
+            // Auto-redirect
             setTimeout(() => {
-                if (loginSuccess) {
-                    handleRedirectAfterSuccess();
-                }
-            }, 2000);
+                handleRedirectAfterSuccess();
+            }, 1600);
         } catch (err) {
             console.error("Login error:", err);
             setError("An error occurred. Please try again.");
@@ -93,16 +96,8 @@ export default function StaffLogin() {
         }
     };
 
-    const handleRedirectAfterSuccess = () => {
-        if (isRedirecting) return;
-        setIsRedirecting(true);
-        setLoginSuccess(false);
-        window.location.href = "/staff/dashboard";
-    };
-
     return (
         <div className="min-h-screen flex font-sans">
-            {/* Left Panel - Branding with Bagong Cabuyao colors */}
             <div
                 className="hidden lg:flex lg:w-5/12 flex-col justify-between p-10 relative overflow-hidden"
                 style={{
@@ -110,16 +105,12 @@ export default function StaffLogin() {
                         "linear-gradient(160deg, #dc2626 0%, #b91c1c 30%, #1e40af 70%, #1e3a8a 100%)",
                 }}
             >
-                {/* Background image overlay */}
                 <div
                     className="absolute inset-0 bg-cover bg-center opacity-15"
-                    style={{
-                        backgroundImage: "url('/images/cabs.png')",
-                    }}
+                    style={{ backgroundImage: "url('/images/cabs.png')" }}
                 />
 
                 <div className="relative z-10">
-                    {/* Logo & Branding */}
                     <div className="flex items-center mb-12">
                         <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center border-2 border-yellow-400 p-0.5">
                             <img
@@ -137,11 +128,11 @@ export default function StaffLogin() {
                             </div>
                         </div>
                     </div>
+
                     <div className="mt-8">
                         <p className="text-red-100 text-base leading-relaxed mb-6">
                             Secure access to the City of Cabuyao's internal
-                            management system. Manage operations, services, and
-                            citizen engagement from a unified dashboard.
+                            management system.
                         </p>
 
                         <div className="space-y-3">
@@ -205,12 +196,11 @@ export default function StaffLogin() {
                     </div>
                 </div>
 
-                {/* Bottom accent bar with flag colors */}
                 <div className="relative z-10">
                     <div className="flex h-1 w-24 mb-4">
-                        <div className="w-1/3 h-full bg-blue-500"></div>
-                        <div className="w-1/3 h-full bg-yellow-400"></div>
-                        <div className="w-1/3 h-full bg-red-500"></div>
+                        <div className="w-1/3 h-full bg-blue-500" />
+                        <div className="w-1/3 h-full bg-yellow-400" />
+                        <div className="w-1/3 h-full bg-red-500" />
                     </div>
                     <p className="text-red-200 text-sm">
                         © 2026 City of Cabuyao. All rights reserved.
@@ -218,10 +208,8 @@ export default function StaffLogin() {
                 </div>
             </div>
 
-            {/* Right Panel - Login Form */}
             <div className="flex-1 flex items-center justify-center bg-white px-8 py-12">
                 <div className="w-full max-w-md">
-                    {/* Mobile logo */}
                     <div className="lg:hidden flex items-center mb-8">
                         <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center border-2 border-yellow-400 p-0.5">
                             <img
@@ -250,7 +238,6 @@ export default function StaffLogin() {
                         </p>
                     </div>
 
-                    {/* Registration Success Modal */}
                     {success && (
                         <div
                             className="fixed inset-0 z-[100] flex items-center justify-center transition-colors"
@@ -317,7 +304,6 @@ export default function StaffLogin() {
                         </div>
                     )}
 
-                    {/* Login Success Modal */}
                     {loginSuccess && (
                         <div
                             className="fixed inset-0 z-[100] flex items-center justify-center transition-colors"
@@ -364,42 +350,14 @@ export default function StaffLogin() {
                                             Login Successful!
                                         </h2>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Welcome back! Redirecting you to the
-                                            dashboard...
+                                            Redirecting you to the dashboard...
                                         </p>
                                     </div>
-                                    <div className="flex items-center justify-center gap-2 mb-4">
-                                        <div
-                                            className="w-2 h-2 rounded-full bg-green-500 animate-bounce"
-                                            style={{ animationDelay: "0ms" }}
-                                        ></div>
-                                        <div
-                                            className="w-2 h-2 rounded-full bg-green-500 animate-bounce"
-                                            style={{ animationDelay: "150ms" }}
-                                        ></div>
-                                        <div
-                                            className="w-2 h-2 rounded-full bg-green-500 animate-bounce"
-                                            style={{ animationDelay: "300ms" }}
-                                        ></div>
-                                    </div>
-                                    <button
-                                        onClick={handleRedirectAfterSuccess}
-                                        className="w-full py-3 rounded-xl text-white text-sm font-semibold transition-all active:scale-[0.98] hover:opacity-90"
-                                        style={{
-                                            background:
-                                                "linear-gradient(135deg, #0d9488, #0f766e)",
-                                            boxShadow:
-                                                "0 4px 12px rgba(13,148,136,0.25)",
-                                        }}
-                                    >
-                                        Go to Dashboard
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Error Modal */}
                     {error && (
                         <div
                             className="fixed inset-0 z-[100] flex items-center justify-center transition-colors"
@@ -477,9 +435,11 @@ export default function StaffLogin() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Email */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label
+                                className="block text-sm font-medium text-gray-700 mb-1.5"
+                                htmlFor="email"
+                            >
                                 Email Address
                             </label>
                             <div className="relative">
@@ -488,6 +448,7 @@ export default function StaffLogin() {
                                     size={16}
                                 />
                                 <input
+                                    id="email"
                                     type="email"
                                     placeholder="name@cabuyao.gov.ph"
                                     value={form.email}
@@ -502,10 +463,12 @@ export default function StaffLogin() {
                             </div>
                         </div>
 
-                        {/* Password */}
                         <div>
                             <div className="flex justify-between items-center mb-1.5">
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label
+                                    className="block text-sm font-medium text-gray-700"
+                                    htmlFor="password"
+                                >
                                     Password
                                 </label>
                                 <a
@@ -521,6 +484,7 @@ export default function StaffLogin() {
                                     size={16}
                                 />
                                 <input
+                                    id="password"
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     value={form.password}
@@ -548,7 +512,6 @@ export default function StaffLogin() {
                             </div>
                         </div>
 
-                        {/* Remember me */}
                         <div className="flex items-center">
                             <input
                                 type="checkbox"
@@ -563,13 +526,13 @@ export default function StaffLogin() {
                             </label>
                         </div>
 
-                        {/* Submit */}
                         <button
                             type="submit"
                             className="w-full py-3 rounded-lg text-white font-semibold text-sm transition-all duration-200 hover:opacity-90 active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
                             style={{
                                 background:
                                     "linear-gradient(90deg, #dc2626, #b91c1c)",
+                                opacity: 1,
                             }}
                         >
                             Sign In
@@ -578,11 +541,12 @@ export default function StaffLogin() {
 
                     <div className="mt-8 pt-6 border-t border-gray-100">
                         <p className="text-center text-gray-500 text-sm">
-                            Don't have an account?{" "}
+                            Don't have an account?
                             <a
                                 href="/staff/register"
                                 className="text-red-600 font-medium hover:underline"
                             >
+                                {" "}
                                 Register
                             </a>
                         </p>

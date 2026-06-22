@@ -33,11 +33,24 @@ const NAV_ITEMS = {
  */
 function DesktopDropdown({ label, items, active }) {
     return (
-        <div className="relative group py-4">
-            <button className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-red-600 transition">
-                {label} <ChevronDown size={14} />
+        <div className="relative group">
+            <button
+                className={`flex items-center gap-1 text-sm font-semibold px-4 py-2 rounded-full transition ${
+                    active
+                        ? "text-red-600 bg-red-50"
+                        : "text-gray-600 hover:text-red-600"
+                }`}
+            >
+                {label}
+                <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 group-hover:rotate-180 ${
+                        active ? "text-red-600" : ""
+                    }`}
+                />
             </button>
-            <div className="absolute top-full left-0 mt-0 w-56 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+
+            <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
                 {items.map((item, idx) => (
                     <a
                         key={idx}
@@ -55,12 +68,23 @@ function DesktopDropdown({ label, items, active }) {
 /**
  * Mobile accordion menu item component
  */
-function MobileAccordion({ label, items, isOpen, onToggle }) {
+function MobileAccordion({
+    label,
+    items,
+    isOpen,
+    onToggle,
+    isActiveMenu,
+    currentPath,
+}) {
     return (
         <div>
             <button
                 onClick={onToggle}
-                className="w-full px-6 py-4 flex items-center justify-between text-sm font-semibold text-gray-800 hover:text-red-600 transition-colors border-b border-gray-50"
+                className={`w-full px-6 py-4 flex items-center justify-between text-sm font-semibold transition-colors border-b border-gray-50 ${
+                    isActiveMenu
+                        ? "text-red-600 bg-red-50 border-l-4 border-red-600"
+                        : "text-gray-800 hover:text-red-600 border-l-4 border-transparent"
+                }`}
             >
                 {label}
                 <ChevronDown
@@ -72,15 +96,22 @@ function MobileAccordion({ label, items, isOpen, onToggle }) {
             </button>
             {isOpen && (
                 <div className="bg-gray-50 flex flex-col py-2 border-b border-gray-100 shadow-inner">
-                    {items.map((item, idx) => (
-                        <a
-                            key={idx}
-                            href={item.href}
-                            className="px-10 py-3 text-sm text-gray-600 hover:text-red-600 transition-colors"
-                        >
-                            {item.label}
-                        </a>
-                    ))}
+                    {items.map((item, idx) => {
+                        const isSubItemActive = currentPath === item.href;
+                        return (
+                            <a
+                                key={idx}
+                                href={item.href}
+                                className={`px-10 py-3 text-sm transition-colors ${
+                                    isSubItemActive
+                                        ? "text-red-600 font-bold bg-red-100/50"
+                                        : "text-gray-600 hover:text-red-600"
+                                }`}
+                            >
+                                {item.label}
+                            </a>
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -91,7 +122,11 @@ function MobileAccordion({ label, items, isOpen, onToggle }) {
  * PublicHeader component
  * Reusable header for all public-facing pages
  */
-export default function PublicHeader({ activePage = "home" }) {
+export default function PublicHeader() {
+    // 1. Auto-detect the current URL path
+    const currentPath =
+        typeof window !== "undefined" ? window.location.pathname : "/";
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [openMobileDropdown, setOpenMobileDropdown] = useState(null);
 
@@ -99,11 +134,19 @@ export default function PublicHeader({ activePage = "home" }) {
         setOpenMobileDropdown((prev) => (prev === menuName ? null : menuName));
     };
 
-    const isActive = (page) => activePage === page;
+    // 2. Helper functions to determine if links are active
+    const isLinkActive = (path) => currentPath === path;
+    const isDropdownActive = (items) => {
+        return items.some(
+            (item) =>
+                currentPath === item.href ||
+                currentPath.startsWith(item.href + "/"),
+        );
+    };
 
     return (
         <>
-            {/* 1. TOP BAR (Scrolls away naturally) */}
+            {/* 1. TOP BAR */}
             <div
                 className="w-full h-8 flex items-center justify-between px-6 text-white text-xs font-medium"
                 style={{
@@ -115,7 +158,7 @@ export default function PublicHeader({ activePage = "home" }) {
                 <WeatherWidget />
             </div>
 
-            {/* STICKY CONTAINER: Wraps both Nav and Mobile Menu to prevent overlap */}
+            {/* STICKY CONTAINER */}
             <div className="sticky top-0 z-50 w-full shadow-sm bg-white">
                 {/* 2. NAVIGATION BAR */}
                 <nav className="w-full bg-white px-6 md:px-12 py-4 flex items-center justify-between">
@@ -147,7 +190,7 @@ export default function PublicHeader({ activePage = "home" }) {
                         <a
                             href="/"
                             className={`text-sm font-semibold px-4 py-2 rounded-full transition ${
-                                isActive("home")
+                                isLinkActive("/")
                                     ? "text-red-600 bg-red-50"
                                     : "text-gray-600 hover:text-red-600"
                             }`}
@@ -158,26 +201,26 @@ export default function PublicHeader({ activePage = "home" }) {
                         <DesktopDropdown
                             label="The City"
                             items={NAV_ITEMS.theCity}
-                            active={isActive("city")}
+                            active={isDropdownActive(NAV_ITEMS.theCity)}
                         />
 
                         <DesktopDropdown
                             label="Government"
                             items={NAV_ITEMS.government}
-                            active={isActive("government")}
+                            active={isDropdownActive(NAV_ITEMS.government)}
                         />
 
                         <DesktopDropdown
                             label="E-Services"
                             items={NAV_ITEMS.eServices}
-                            active={isActive("services")}
+                            active={isDropdownActive(NAV_ITEMS.eServices)}
                         />
 
                         <a
                             href="/drrm"
-                            className={`text-sm font-medium transition ${
-                                isActive("drrm")
-                                    ? "text-red-600"
+                            className={`text-sm font-semibold px-4 py-2 rounded-full transition ${
+                                isLinkActive("/drrm")
+                                    ? "text-red-600 bg-red-50"
                                     : "text-gray-600 hover:text-red-600"
                             }`}
                         >
@@ -185,9 +228,9 @@ export default function PublicHeader({ activePage = "home" }) {
                         </a>
                         <a
                             href="/news"
-                            className={`text-sm font-medium transition ${
-                                isActive("news")
-                                    ? "text-red-600"
+                            className={`text-sm font-semibold px-4 py-2 rounded-full transition ${
+                                isLinkActive("/news")
+                                    ? "text-red-600 bg-red-50"
                                     : "text-gray-600 hover:text-red-600"
                             }`}
                         >
@@ -195,9 +238,9 @@ export default function PublicHeader({ activePage = "home" }) {
                         </a>
                         <a
                             href="/faqs"
-                            className={`text-sm font-medium transition ${
-                                isActive("faqs")
-                                    ? "text-red-600"
+                            className={`text-sm font-semibold px-4 py-2 rounded-full transition ${
+                                isLinkActive("/faqs")
+                                    ? "text-red-600 bg-red-50"
                                     : "text-gray-600 hover:text-red-600"
                             }`}
                         >
@@ -205,9 +248,9 @@ export default function PublicHeader({ activePage = "home" }) {
                         </a>
                         <a
                             href="/contact"
-                            className={`text-sm font-medium transition ${
-                                isActive("contact")
-                                    ? "text-red-600"
+                            className={`text-sm font-semibold px-4 py-2 rounded-full transition ${
+                                isLinkActive("/contact")
+                                    ? "text-red-600 bg-red-50"
                                     : "text-gray-600 hover:text-red-600"
                             }`}
                         >
@@ -233,16 +276,16 @@ export default function PublicHeader({ activePage = "home" }) {
                     </div>
                 </nav>
 
-                {/* 3. MOBILE MENU (Now flows naturally below the Nav inside the sticky wrapper) */}
+                {/* 3. MOBILE MENU */}
                 {isMobileMenuOpen && (
                     <div className="w-full bg-white shadow-xl border-t border-gray-100 xl:hidden overflow-y-auto max-h-[calc(100vh-80px)]">
                         <a
                             href="/"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className={`block px-6 py-4 text-sm font-bold transition-colors ${
-                                isActive("home")
+                            className={`block px-6 py-4 text-sm font-semibold transition-colors border-b border-gray-50 ${
+                                isLinkActive("/")
                                     ? "text-red-600 bg-red-50 border-l-4 border-red-600"
-                                    : "text-gray-800 hover:text-red-600"
+                                    : "text-gray-800 hover:text-red-600 border-l-4 border-transparent"
                             }`}
                         >
                             Home
@@ -253,6 +296,8 @@ export default function PublicHeader({ activePage = "home" }) {
                             items={NAV_ITEMS.theCity}
                             isOpen={openMobileDropdown === "city"}
                             onToggle={() => toggleMobileDropdown("city")}
+                            isActiveMenu={isDropdownActive(NAV_ITEMS.theCity)}
+                            currentPath={currentPath}
                         />
 
                         <MobileAccordion
@@ -260,6 +305,10 @@ export default function PublicHeader({ activePage = "home" }) {
                             items={NAV_ITEMS.government}
                             isOpen={openMobileDropdown === "gov"}
                             onToggle={() => toggleMobileDropdown("gov")}
+                            isActiveMenu={isDropdownActive(
+                                NAV_ITEMS.government,
+                            )}
+                            currentPath={currentPath}
                         />
 
                         <MobileAccordion
@@ -267,33 +316,51 @@ export default function PublicHeader({ activePage = "home" }) {
                             items={NAV_ITEMS.eServices}
                             isOpen={openMobileDropdown === "services"}
                             onToggle={() => toggleMobileDropdown("services")}
+                            isActiveMenu={isDropdownActive(NAV_ITEMS.eServices)}
+                            currentPath={currentPath}
                         />
 
                         <a
                             href="/drrm"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
+                            className={`block px-6 py-4 text-sm font-semibold transition-colors border-b border-gray-50 ${
+                                isLinkActive("/drrm")
+                                    ? "text-red-600 bg-red-50 border-l-4 border-red-600"
+                                    : "text-gray-800 hover:text-red-600 border-l-4 border-transparent"
+                            }`}
                         >
                             DRRM
                         </a>
                         <a
                             href="/news"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
+                            className={`block px-6 py-4 text-sm font-semibold transition-colors border-b border-gray-50 ${
+                                isLinkActive("/news")
+                                    ? "text-red-600 bg-red-50 border-l-4 border-red-600"
+                                    : "text-gray-800 hover:text-red-600 border-l-4 border-transparent"
+                            }`}
                         >
                             News
                         </a>
                         <a
                             href="/faqs"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 border-b border-gray-50 transition-colors"
+                            className={`block px-6 py-4 text-sm font-semibold transition-colors border-b border-gray-50 ${
+                                isLinkActive("/faqs")
+                                    ? "text-red-600 bg-red-50 border-l-4 border-red-600"
+                                    : "text-gray-800 hover:text-red-600 border-l-4 border-transparent"
+                            }`}
                         >
                             FAQs
                         </a>
                         <a
                             href="/contact"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="block px-6 py-4 text-sm font-semibold text-gray-800 hover:text-red-600 transition-colors"
+                            className={`block px-6 py-4 text-sm font-semibold transition-colors ${
+                                isLinkActive("/contact")
+                                    ? "text-red-600 bg-red-50 border-l-4 border-red-600"
+                                    : "text-gray-800 hover:text-red-600 border-l-4 border-transparent"
+                            }`}
                         >
                             Contact
                         </a>
