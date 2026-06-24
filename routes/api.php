@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Frontend\NewsController as PublicNewsController;
 use App\Http\Controllers\Frontend\AnnouncementsController as PublicAnnouncementsController;
 use App\Http\Controllers\Frontend\ContactController;
@@ -91,9 +93,25 @@ Route::middleware(['web', 'auth'])->prefix('staff')->group(function () {
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'position' => $user->position,
+                'department' => $user->department,
+                'avatar' => !empty($user->photo) ? URL::to(Storage::url($user->photo)) : null,
+                // The DB schema appears to store a single `users.name`.
+                // Split it so StaffTopBar always receives required values.
+                // Format supported: "First Last" or "First Middle Last".
+                'firstName' => collect(explode(' ', trim((string) $user->name)))->filter()->values()->get(0) ?? null,
+                'middleName' => (function () use ($user) {
+                    $parts = collect(explode(' ', trim((string) $user->name)))->filter()->values();
+                    return $parts->count() >= 3 ? $parts->slice(1, $parts->count() - 2)->join(' ') : null;
+                })(),
+                'lastName' => collect(explode(' ', trim((string) $user->name)))->filter()->values()->last() ?? null,
             ]
         ]);
     });
+
+    // Profile update (used by StaffTopBar)
+    Route::post('profile/update', [\App\Http\Controllers\Staff\ProfileController::class, 'update']);
+
 
     // Dashboard Statistics
     Route::get('/dashboard/stats', [DashboardController::class, 'getDashboardData']);

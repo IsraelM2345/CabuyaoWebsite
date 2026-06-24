@@ -247,7 +247,7 @@ export default function StaffDashboard() {
         <StaffLayout
             currentPage="Dashboard"
             title="Web Portal Dashboard"
-            subtitle="Manage and monitor your city's public web portal content."
+            subtitle="Manage and monitor city's public web portal content."
         >
             {/* Header with Refresh Button */}
             <div className="flex items-center justify-between mb-6">

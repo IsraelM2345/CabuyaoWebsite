@@ -67,7 +67,7 @@ export default function OfficialsExecutive() {
     // There can only be 2 executives: 1 Mayor and 1 Vice Mayor
     const allPositionsFilled = executives.length >= 2;
 
-    // Fetch executives from API and check for edit mode
+    // Fetch executives from API and check for edit/add mode
     useEffect(() => {
         fetchExecutives();
 
@@ -85,6 +85,15 @@ export default function OfficialsExecutive() {
                 // Clear the session storage
                 sessionStorage.removeItem("editOfficialId");
                 sessionStorage.removeItem("editOfficialType");
+            }, 500);
+        }
+
+        // Check if we need to auto-add a new executive (from OfficialsManager navigation)
+        const addMode = sessionStorage.getItem("addOfficialMode");
+        if (addMode === "executive") {
+            setTimeout(() => {
+                setIsAddingNew(true);
+                sessionStorage.removeItem("addOfficialMode");
             }, 500);
         }
     }, []);

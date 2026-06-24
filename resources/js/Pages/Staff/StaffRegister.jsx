@@ -554,16 +554,31 @@ export default function StaffRegister() {
                             </label>
                             <div className="relative">
                                 <Building2
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                                     size={16}
                                 />
-                                <input
-                                    type="text"
-                                    placeholder="e.g., Admin Officer, IT Specialist"
+                                <select
                                     value={form.position}
                                     onChange={set("position")}
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
-                                />
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition appearance-none cursor-pointer"
+                                >
+                                    <option value="">Select Position</option>
+                                    <option value="Admin Officer">Admin Officer</option>
+                                    <option value="IT Specialist">IT Specialist</option>
+                                    <option value="HR Officer">HR Officer</option>
+                                    <option value="Finance Officer">Finance Officer</option>
+                                    <option value="Planning Officer">Planning Officer</option>
+                                    <option value="Public Information Officer">Public Information Officer</option>
+                                    <option value="DRRM Officer">DRRM Officer</option>
+                                    <option value="Health Officer">Health Officer</option>
+                                    <option value="Engineer">Engineer</option>
+                                    <option value="Clerk">Clerk</option>
+                                    <option value="Secretary">Secretary</option>
+                                    <option value="Supervisor">Supervisor</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Director">Director</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                         </div>
 

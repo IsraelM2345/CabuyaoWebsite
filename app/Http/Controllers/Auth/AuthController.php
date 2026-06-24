@@ -53,7 +53,9 @@ class AuthController extends Controller
                 'name' => $name,
                 'email' => $email,
                 'password' => Hash::make($validated['password']),
-                // role / position / department are currently not stored in users table.
+                'role' => $request->input('role', 'staff'),
+                'position' => $validated['position'] ?? null,
+                'department' => $validated['department'] ?? null,
             ]);
 
             return response()->json([
@@ -87,12 +89,15 @@ class AuthController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string'],
+            'remember' => ['nullable', 'boolean'],
         ]);
+
+        $remember = $request->boolean('remember', false);
 
         if (!Auth::attempt([
             'email' => $validated['email'],
             'password' => $validated['password'],
-        ])) {
+        ], $remember)) {
             // Check if the request is an AJAX/Fetch request (used in your StaffLogin.jsx)
             if ($request->wantsJson() || $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
                 return response()->json(['message' => 'Invalid credentials.'], 401);

@@ -61,7 +61,7 @@ export default function OfficialsCouncilors() {
     const [photoPreview, setPhotoPreview] = useState(null);
     const fileInputRef = useRef(null);
 
-    // Fetch councilors from API and check for edit mode
+    // Fetch councilors from API and check for edit/add mode
     useEffect(() => {
         fetchCouncilors();
 
@@ -79,6 +79,15 @@ export default function OfficialsCouncilors() {
                 // Clear the session storage
                 sessionStorage.removeItem("editOfficialId");
                 sessionStorage.removeItem("editOfficialType");
+            }, 500);
+        }
+
+        // Check if we need to auto-add a new councilor (from OfficialsManager navigation)
+        const addMode = sessionStorage.getItem("addOfficialMode");
+        if (addMode === "councilor") {
+            setTimeout(() => {
+                setEditingId("new");
+                sessionStorage.removeItem("addOfficialMode");
             }, 500);
         }
     }, []);

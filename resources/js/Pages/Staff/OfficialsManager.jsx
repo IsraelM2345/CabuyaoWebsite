@@ -27,18 +27,8 @@ export default function OfficialsManager() {
     const [searchQuery, setSearchQuery] = useState("");
     const [positionFilter, setPositionFilter] = useState("All Positions");
     const [statusFilter, setStatusFilter] = useState("All Status");
-    const [showAddModal, setShowAddModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
-    const [newOfficial, setNewOfficial] = useState({
-        name: "",
-        position: "",
-        office: "",
-        term: "",
-        email: "",
-        phone: "",
-        status: "active",
-    });
 
     // Fetch officials from both executives and councilors APIs
     const fetchOfficials = async () => {
@@ -134,29 +124,6 @@ export default function OfficialsManager() {
         mayor: officials.filter((o) => o.position === "City Mayor").length,
         viceMayor: officials.filter((o) => o.position === "Vice Mayor").length,
         councilors: officials.filter((o) => o.position === "Councilor").length,
-    };
-
-    const handleAdd = () => {
-        if (newOfficial.name && newOfficial.position) {
-            setOfficials([
-                ...officials,
-                {
-                    ...newOfficial,
-                    id: `new-${Date.now()}`,
-                    image: null,
-                },
-            ]);
-            setShowAddModal(false);
-            setNewOfficial({
-                name: "",
-                position: "",
-                office: "",
-                term: "",
-                email: "",
-                phone: "",
-                status: "active",
-            });
-        }
     };
 
     const handleDelete = async (id) => {
@@ -380,13 +347,34 @@ export default function OfficialsManager() {
                             ))}
                         </select>
 
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
-                        >
-                            <Plus size={16} />
-                            Add Official
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    sessionStorage.setItem('addOfficialMode', 'executive');
+                                    window.location.href = '/staff/officials/executive';
+                                }}
+                                disabled={stats.mayor + stats.viceMayor >= 2}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
+                                    stats.mayor + stats.viceMayor >= 2
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}
+                                title={stats.mayor + stats.viceMayor >= 2 ? 'Maximum of 2 executives allowed (Mayor and Vice Mayor)' : 'Add Executive'}
+                            >
+                                <Plus size={16} />
+                                Add Executive
+                            </button>
+                            <button
+                                onClick={() => {
+                                    sessionStorage.setItem('addOfficialMode', 'councilor');
+                                    window.location.href = '/staff/officials/councilors';
+                                }}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition"
+                            >
+                                <Plus size={16} />
+                                Add Councilor
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -539,206 +527,6 @@ export default function OfficialsManager() {
                     </div>
                 </div>
             </div>
-
-            {/* Add Official Modal */}
-            {showAddModal && (
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center"
-                    style={{
-                        backgroundColor: "rgba(15,23,42,0.6)",
-                        backdropFilter: "blur(6px)",
-                    }}
-                    onClick={() => setShowAddModal(false)}
-                >
-                    <div
-                        className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl bg-white dark:bg-slate-800"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div
-                            className="h-1 w-full"
-                            style={{
-                                background:
-                                    "linear-gradient(90deg, #dc2626, #b91c1c)",
-                            }}
-                        />
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                                    Add New Official
-                                </h2>
-                                <button
-                                    onClick={() => setShowAddModal(false)}
-                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                                        Full Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newOfficial.name}
-                                        onChange={(e) =>
-                                            setNewOfficial({
-                                                ...newOfficial,
-                                                name: e.target.value,
-                                            })
-                                        }
-                                        placeholder="Hon. Juan Dela Cruz"
-                                        className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                                        Position *
-                                    </label>
-                                    <select
-                                        value={newOfficial.position}
-                                        onChange={(e) =>
-                                            setNewOfficial({
-                                                ...newOfficial,
-                                                position: e.target.value,
-                                            })
-                                        }
-                                        className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                    >
-                                        <option value="">
-                                            Select Position
-                                        </option>
-                                        <option value="City Mayor">
-                                            City Mayor
-                                        </option>
-                                        <option value="Vice Mayor">
-                                            Vice Mayor
-                                        </option>
-                                        <option value="Councilor">
-                                            Councilor
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                                        Office / Department
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newOfficial.office}
-                                        onChange={(e) =>
-                                            setNewOfficial({
-                                                ...newOfficial,
-                                                office: e.target.value,
-                                            })
-                                        }
-                                        placeholder="Office of the Mayor"
-                                        className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                                            Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={newOfficial.email}
-                                            onChange={(e) =>
-                                                setNewOfficial({
-                                                    ...newOfficial,
-                                                    email: e.target.value,
-                                                })
-                                            }
-                                            placeholder="email@cabuyao.gov.ph"
-                                            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                                            Phone
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={newOfficial.phone}
-                                            onChange={(e) =>
-                                                setNewOfficial({
-                                                    ...newOfficial,
-                                                    phone: e.target.value,
-                                                })
-                                            }
-                                            placeholder="(049) 555-1234"
-                                            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                                            Term
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={newOfficial.term}
-                                            onChange={(e) =>
-                                                setNewOfficial({
-                                                    ...newOfficial,
-                                                    term: e.target.value,
-                                                })
-                                            }
-                                            placeholder="2022 - 2025"
-                                            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-                                            Status
-                                        </label>
-                                        <select
-                                            value={newOfficial.status}
-                                            onChange={(e) =>
-                                                setNewOfficial({
-                                                    ...newOfficial,
-                                                    status: e.target.value,
-                                                })
-                                            }
-                                            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                                        >
-                                            <option value="active">
-                                                Active
-                                            </option>
-                                            <option value="inactive">
-                                                Inactive
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-3 mt-6">
-                                <button
-                                    onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-600 transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleAdd}
-                                    className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition"
-                                >
-                                    <Plus size={16} />
-                                    Add Official
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Delete Modal */}
             {showDeleteModal && (

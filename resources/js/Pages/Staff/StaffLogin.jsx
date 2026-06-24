@@ -12,6 +12,7 @@ import {
 export default function StaffLogin() {
     const [showPassword, setShowPassword] = useState(false);
     const [form, setForm] = useState({ email: "", password: "" });
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loginSuccess, setLoginSuccess] = useState(false);
@@ -25,6 +26,14 @@ export default function StaffLogin() {
                 "Account created successfully! Please sign in with your credentials.",
             );
             window.history.replaceState({}, document.title, "/staff/login");
+        }
+
+        // Load saved email from localStorage if remember me was checked
+        const savedEmail = localStorage.getItem("staff_remember_email");
+        const savedRemember = localStorage.getItem("staff_remember_me") === "true";
+        if (savedEmail && savedRemember) {
+            setForm((prev) => ({ ...prev, email: savedEmail }));
+            setRememberMe(true);
         }
     }, []);
 
@@ -60,6 +69,7 @@ export default function StaffLogin() {
                 body: JSON.stringify({
                     email: form.email,
                     password: form.password,
+                    remember: rememberMe,
                 }),
             });
 
@@ -72,11 +82,27 @@ export default function StaffLogin() {
                         "Invalid credentials. Please check your email and password.",
                 );
 
+                // Clear saved credentials on failed login
+                if (rememberMe) {
+                    localStorage.removeItem("staff_remember_email");
+                    localStorage.removeItem("staff_remember_me");
+                    setRememberMe(false);
+                }
+
                 // Hard stop loader (success/failure modal should take over)
                 window.dispatchEvent(new Event("global:loader-hide"));
 
                 setIsLoggingIn(false);
                 return;
+            }
+
+            // Save email to localStorage if remember me is checked
+            if (rememberMe) {
+                localStorage.setItem("staff_remember_email", form.email);
+                localStorage.setItem("staff_remember_me", "true");
+            } else {
+                localStorage.removeItem("staff_remember_email");
+                localStorage.removeItem("staff_remember_me");
             }
 
             setLoginSuccess(true);
@@ -516,6 +542,8 @@ export default function StaffLogin() {
                             <input
                                 type="checkbox"
                                 id="remember"
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe(e.target.checked)}
                                 className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
                             />
                             <label
