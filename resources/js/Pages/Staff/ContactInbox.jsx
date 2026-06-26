@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { StaffLayout } from "../../Components/StaffSidebar";
+import { useGlobalLoader } from "../../Hooks/useGlobalLoader";
 import {
     Search,
     Mail,
@@ -16,6 +17,7 @@ import {
     RefreshCw,
     X,
     Archive,
+    Send,
 } from "lucide-react";
 
 // NOTE: Backend data model is `public_contact_messages`.
@@ -23,7 +25,7 @@ import {
 // API routes (staff):
 // - GET    /staff/contacts?search=&status=&per_page=
 // - GET    /staff/contacts/{contactMessage} (marks as read when status == 'Unread')
-// - POST   /staff/contacts/{contactMessage}/reply  { reply_text }
+// - POST   /staff/contacts/{contactMessage}/reply  { reply_text } - Adds staff remark
 // - PATCH  /staff/contacts/{contactMessage}/status { status }
 // - DELETE /staff/contacts/{contactMessage}
 
@@ -71,10 +73,11 @@ export default function ContactInbox() {
     const [lastPage, setLastPage] = useState(1);
 
     const [selectedMessage, setSelectedMessage] = useState(null);
-    const [showReplyModal, setShowReplyModal] = useState(false);
+    const [showRemarkModal, setShowRemarkModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
-    const [replyContent, setReplyContent] = useState("");
+    const [remarkContent, setRemarkContent] = useState("");
+    const { withLoader } = useGlobalLoader();
 
     const [refreshing, setRefreshing] = useState(false);
 
@@ -256,10 +259,10 @@ export default function ContactInbox() {
         }
     };
 
-    const handleReply = (message) => {
+    const handleRemark = (message) => {
         setSelectedMessage(message);
-        setReplyContent("");
-        setShowReplyModal(true);
+        setRemarkContent("");
+        setShowRemarkModal(true);
     };
 
     const [viewModalMessage, setViewModalMessage] = useState(null);
@@ -277,43 +280,45 @@ export default function ContactInbox() {
         setShowViewModal(true);
     };
 
-    const submitReply = async () => {
-        if (!selectedMessage || !replyContent.trim()) return;
+    const submitRemark = async () => {
+        if (!selectedMessage || !remarkContent.trim()) return;
 
         const contactMessageId = selectedMessage.id;
-        try {
-            const csrfToken = getCsrfToken();
+        await withLoader(async () => {
+            try {
+                const csrfToken = getCsrfToken();
 
-            const res = await fetch(
-                `/api/staff/contacts/${contactMessageId}/reply`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Requested-With": "XMLHttpRequest",
-                        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+                const res = await fetch(
+                    `/api/staff/contacts/${contactMessageId}/reply`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                            ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+                        },
+                        credentials: "include",
+                        body: JSON.stringify({ reply_text: remarkContent }),
                     },
-                    credentials: "include",
-                    body: JSON.stringify({ reply_text: replyContent }),
-                },
-            );
-
-            const json = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                throw new Error(
-                    json?.message || `Failed to send reply (${res.status})`,
                 );
+
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(
+                        json?.message || `Failed to add remark (${res.status})`,
+                    );
+                }
+
+                setShowRemarkModal(false);
+                setSelectedMessage(null);
+                setRemarkContent("");
+
+                // Refresh
+                await fetchMessages({ search: searchQuery, status: statusFilter });
+            } catch (e) {
+                setError(e?.message || "Unable to add remark.");
             }
-
-            setShowReplyModal(false);
-            setSelectedMessage(null);
-            setReplyContent("");
-
-            // Refresh
-            await fetchMessages({ search: searchQuery, status: statusFilter });
-        } catch (e) {
-            setError(e?.message || "Unable to send reply.");
-        }
+        });
     };
 
     const handleDelete = (id) => {
@@ -322,32 +327,34 @@ export default function ContactInbox() {
     };
 
     const confirmDelete = async () => {
-        try {
-            const csrfToken = getCsrfToken();
+        await withLoader(async () => {
+            try {
+                const csrfToken = getCsrfToken();
 
-            const res = await fetch(`/api/staff/contacts/${deleteId}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                    ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
-                },
-                credentials: "include",
-            });
+                const res = await fetch(`/api/staff/contacts/${deleteId}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+                    },
+                    credentials: "include",
+                });
 
-            const json = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                throw new Error(
-                    json?.message || `Failed to delete (${res.status})`,
-                );
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(
+                        json?.message || `Failed to delete (${res.status})`,
+                    );
+                }
+
+                setShowDeleteModal(false);
+                setDeleteId(null);
+                await fetchMessages({ search: searchQuery, status: statusFilter });
+            } catch (e) {
+                setError(e?.message || "Unable to delete message.");
             }
-
-            setShowDeleteModal(false);
-            setDeleteId(null);
-            await fetchMessages({ search: searchQuery, status: statusFilter });
-        } catch (e) {
-            setError(e?.message || "Unable to delete message.");
-        }
+        });
     };
 
     const handlePageChange = async (nextPage) => {
@@ -469,13 +476,15 @@ export default function ContactInbox() {
                         </div>
 
                         <button
-                            onClick={() =>
-                                fetchMessages({
-                                    search: searchQuery,
-                                    status: statusFilter,
-                                    silent: true,
-                                })
-                            }
+                            onClick={async () => {
+                                await withLoader(async () => {
+                                    await fetchMessages({
+                                        search: searchQuery,
+                                        status: statusFilter,
+                                        silent: true,
+                                    });
+                                });
+                            }}
                             disabled={refreshing}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
                                 refreshing
@@ -567,9 +576,15 @@ export default function ContactInbox() {
                                         {getStatusBadge(msg.status)}
                                     </td>
                                     <td className="px-4 py-3 hidden lg:table-cell">
-                                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400">
-                                            —
-                                        </span>
+                                        {msg.reply ? (
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                Has Remark
+                                            </span>
+                                        ) : (
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400">
+                                                No Remark
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3 hidden md:table-cell">
                                         <span className="text-sm text-gray-600 dark:text-slate-300">
@@ -585,10 +600,10 @@ export default function ContactInbox() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleReply(msg);
+                                                    handleRemark(msg);
                                                 }}
                                                 className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition"
-                                                title="Reply"
+                                                title="Add Staff Remark"
                                             >
                                                 <Reply size={16} />
                                             </button>
@@ -763,7 +778,7 @@ export default function ContactInbox() {
                             {viewModalMessage.reply && (
                                 <div className="mt-5 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-900/30 p-4">
                                     <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-2">
-                                        Staff Reply
+                                        Staff Remark
                                     </p>
                                     <p className="text-sm text-green-900 dark:text-green-100 whitespace-pre-wrap">
                                         {viewModalMessage.reply}
@@ -784,15 +799,15 @@ export default function ContactInbox() {
                 </div>
             )}
 
-            {/* Reply Modal */}
-            {showReplyModal && (
+            {/* Staff Remark Modal */}
+            {showRemarkModal && (
                 <div
                     className="fixed inset-0 z-[100] flex items-center justify-center"
                     style={{
                         backgroundColor: "rgba(15,23,42,0.6)",
                         backdropFilter: "blur(6px)",
                     }}
-                    onClick={() => setShowReplyModal(false)}
+                    onClick={() => setShowRemarkModal(false)}
                 >
                     <div
                         className="relative w-full max-w-2xl mx-4 rounded-2xl overflow-hidden shadow-2xl bg-white dark:bg-slate-800"
@@ -808,10 +823,10 @@ export default function ContactInbox() {
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                                    Reply to {selectedMessage?.name}
+                                    Add Staff Remark for {selectedMessage?.name}
                                 </h2>
                                 <button
-                                    onClick={() => setShowReplyModal(false)}
+                                    onClick={() => setShowRemarkModal(false)}
                                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition"
                                 >
                                     <X size={18} />
@@ -831,32 +846,32 @@ export default function ContactInbox() {
                             {/* Reply Input */}
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                                    Your Reply
+                                    Your Staff Remark
                                 </label>
                                 <textarea
-                                    value={replyContent}
+                                    value={remarkContent}
                                     onChange={(e) =>
-                                        setReplyContent(e.target.value)
+                                        setRemarkContent(e.target.value)
                                     }
                                     rows={6}
                                     className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
-                                    placeholder="Type your reply here..."
+                                    placeholder="Type your staff remark here (notes about action taken, email sent, etc.)..."
                                 />
                             </div>
 
                             <div className="flex items-center justify-end gap-3">
                                 <button
-                                    onClick={() => setShowReplyModal(false)}
+                                    onClick={() => setShowRemarkModal(false)}
                                     className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-600 transition"
                                 >
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={submitReply}
+                                    onClick={submitRemark}
                                     className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition"
                                 >
                                     <Reply size={16} />
-                                    Send Reply
+                                    Save Remark
                                 </button>
                             </div>
                         </div>

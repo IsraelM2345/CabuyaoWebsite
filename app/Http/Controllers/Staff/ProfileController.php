@@ -69,7 +69,7 @@ class ProfileController extends Controller
 
         // Update email if provided
         if (!empty($validated['email'])) {
-            $user->email = strtolower($validated['email']);
+            $user->email = Str::lower(trim($validated['email']));
         }
 
         // Only set these if the columns exist on the users table.

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useGlobalLoader } from "@/Hooks/useGlobalLoader";
 import {
     Users,
     Search,
@@ -31,6 +32,7 @@ export default function UserManagement() {
     const [userRole, setUserRole] = useState(null);
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
+    const { withLoader } = useGlobalLoader();
 
     // Check user authorization
     useEffect(() => {
@@ -105,36 +107,38 @@ export default function UserManagement() {
     const handleDelete = async () => {
         if (!userToDelete) return;
 
-        try {
-            const response = await fetch(
-                `/api/staff/users/${userToDelete.id}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        Accept: "application/json",
-                        "X-CSRF-TOKEN": document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute("content"),
+        await withLoader(async () => {
+            try {
+                const response = await fetch(
+                    `/api/staff/users/${userToDelete.id}`,
+                    {
+                        method: "DELETE",
+                        headers: {
+                            Accept: "application/json",
+                            "X-CSRF-TOKEN": document
+                                .querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute("content"),
+                        },
                     },
-                },
-            );
+                );
 
-            const data = await response.json();
-            if (data.success) {
-                setUsers(users.filter((u) => u.id !== userToDelete.id));
-                setSuccessMessage("User deleted successfully");
-                setShowDeleteModal(false);
-                setUserToDelete(null);
-                setTimeout(() => setSuccessMessage(""), 3000);
-            } else {
-                setErrorMessage("Failed to delete user");
+                const data = await response.json();
+                if (data.success) {
+                    setUsers(users.filter((u) => u.id !== userToDelete.id));
+                    setSuccessMessage("User deleted successfully");
+                    setShowDeleteModal(false);
+                    setUserToDelete(null);
+                    setTimeout(() => setSuccessMessage(""), 3000);
+                } else {
+                    setErrorMessage("Failed to delete user");
+                    setTimeout(() => setErrorMessage(""), 3000);
+                }
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                setErrorMessage("An error occurred while deleting user");
                 setTimeout(() => setErrorMessage(""), 3000);
             }
-        } catch (error) {
-            console.error("Error deleting user:", error);
-            setErrorMessage("An error occurred while deleting user");
-            setTimeout(() => setErrorMessage(""), 3000);
-        }
+        });
     };
 
     // Export users to CSV

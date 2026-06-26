@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, router } from "@inertiajs/react";
 import { StaffLayout } from "../../Components/StaffSidebar";
+import { useGlobalLoader } from "../../Hooks/useGlobalLoader";
 import {
     Upload,
     Search,
@@ -47,6 +48,7 @@ export default function MediaManager() {
     });
     const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef(null);
+    const { withLoader } = useGlobalLoader();
 
     const categories = ["Festivals", "Government", "Tourism", "Community"];
 
@@ -110,27 +112,29 @@ export default function MediaManager() {
     };
 
     const confirmDelete = async () => {
-        try {
-            const res = await fetch(`${API_BASE_URL}/media/${deleteId}`, {
-                method: "DELETE",
-                headers: {
-                    Accept: "application/json",
-                    "X-CSRF-TOKEN":
-                        document.querySelector('meta[name="csrf-token"]')
-                            ?.content || "",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                credentials: "same-origin",
-            });
+        await withLoader(async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/media/${deleteId}`, {
+                    method: "DELETE",
+                    headers: {
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN":
+                            document.querySelector('meta[name="csrf-token"]')
+                                ?.content || "",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                });
 
-            if (!res.ok) throw new Error("Delete failed");
+                if (!res.ok) throw new Error("Delete failed");
 
-            setMedia((prev) => prev.filter((m) => m.id !== deleteId));
-            setShowDeleteModal(false);
-            setDeleteId(null);
-        } catch (e) {
-            alert(e?.message || "Unable to delete");
-        }
+                setMedia((prev) => prev.filter((m) => m.id !== deleteId));
+                setShowDeleteModal(false);
+                setDeleteId(null);
+            } catch (e) {
+                alert(e?.message || "Unable to delete");
+            }
+        });
     };
 
     const handleDeleteSelected = () => {
@@ -144,40 +148,42 @@ export default function MediaManager() {
     const confirmDeleteAll = async () => {
         if (isDeletingAll) return;
 
-        try {
-            setIsDeletingAll(true);
+        await withLoader(async () => {
+            try {
+                setIsDeletingAll(true);
 
-            // Delete selected items (or all if none selected)
-            const itemsToDelete =
-                selectedItems.length > 0
-                    ? selectedItems
-                    : media.map((m) => m.id);
-            const deletePromises = itemsToDelete.map((id) =>
-                fetch(`${API_BASE_URL}/media/${id}`, {
-                    method: "DELETE",
-                    headers: {
-                        Accept: "application/json",
-                        "X-CSRF-TOKEN":
-                            document.querySelector('meta[name="csrf-token"]')
-                                ?.content || "",
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                    credentials: "same-origin",
-                }),
-            );
+                // Delete selected items (or all if none selected)
+                const itemsToDelete =
+                    selectedItems.length > 0
+                        ? selectedItems
+                        : media.map((m) => m.id);
+                const deletePromises = itemsToDelete.map((id) =>
+                    fetch(`${API_BASE_URL}/media/${id}`, {
+                        method: "DELETE",
+                        headers: {
+                            Accept: "application/json",
+                            "X-CSRF-TOKEN":
+                                document.querySelector('meta[name="csrf-token"]')
+                                    ?.content || "",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "same-origin",
+                    }),
+                );
 
-            await Promise.all(deletePromises);
+                await Promise.all(deletePromises);
 
-            setMedia((prev) =>
-                prev.filter((m) => !itemsToDelete.includes(m.id)),
-            );
-            setSelectedItems([]);
-            setShowDeleteAllModal(false);
-        } catch (e) {
-            alert(e?.message || "Unable to delete items");
-        } finally {
-            setIsDeletingAll(false);
-        }
+                setMedia((prev) =>
+                    prev.filter((m) => !itemsToDelete.includes(m.id)),
+                );
+                setSelectedItems([]);
+                setShowDeleteAllModal(false);
+            } catch (e) {
+                alert(e?.message || "Unable to delete items");
+            } finally {
+                setIsDeletingAll(false);
+            }
+        });
     };
 
     const toggleSelectAll = () => {
@@ -224,48 +230,50 @@ export default function MediaManager() {
     const handleSaveEdit = async () => {
         if (!editingItem) return;
 
-        try {
-            setIsSaving(true);
+        await withLoader(async () => {
+            try {
+                setIsSaving(true);
 
-            const res = await fetch(`${API_BASE_URL}/media/${editingItem.id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-CSRF-TOKEN":
-                        document.querySelector('meta[name="csrf-token"]')
-                            ?.content || "",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                credentials: "same-origin",
-                body: JSON.stringify(editFormData),
-            });
+                const res = await fetch(`${API_BASE_URL}/media/${editingItem.id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN":
+                            document.querySelector('meta[name="csrf-token"]')
+                                ?.content || "",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify(editFormData),
+                });
 
-            if (!res.ok) {
-                const errJson = await res.json().catch(() => ({}));
-                throw new Error(errJson?.message || "Update failed");
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({}));
+                    throw new Error(errJson?.message || "Update failed");
+                }
+
+                // Update local state
+                setMedia((prev) =>
+                    prev.map((m) =>
+                        m.id === editingItem.id
+                            ? {
+                                  ...m,
+                                  ...editFormData,
+                                  name: editFormData.label || m.name,
+                              }
+                            : m,
+                    ),
+                );
+
+                setShowEditModal(false);
+                setEditingItem(null);
+            } catch (e) {
+                alert(e?.message || "Unable to update media");
+            } finally {
+                setIsSaving(false);
             }
-
-            // Update local state
-            setMedia((prev) =>
-                prev.map((m) =>
-                    m.id === editingItem.id
-                        ? {
-                              ...m,
-                              ...editFormData,
-                              name: editFormData.label || m.name,
-                          }
-                        : m,
-                ),
-            );
-
-            setShowEditModal(false);
-            setEditingItem(null);
-        } catch (e) {
-            alert(e?.message || "Unable to update media");
-        } finally {
-            setIsSaving(false);
-        }
+        });
     };
 
     return (

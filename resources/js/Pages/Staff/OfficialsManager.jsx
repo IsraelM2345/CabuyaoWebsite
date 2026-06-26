@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { StaffLayout } from "../../Components/StaffSidebar";
+import { useGlobalLoader } from "../../Hooks/useGlobalLoader";
 import {
     Plus,
     Search,
@@ -29,6 +30,7 @@ export default function OfficialsManager() {
     const [statusFilter, setStatusFilter] = useState("All Status");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
+    const { withLoader } = useGlobalLoader();
 
     // Fetch officials from both executives and councilors APIs
     const fetchOfficials = async () => {
@@ -132,39 +134,41 @@ export default function OfficialsManager() {
     };
 
     const confirmDelete = async () => {
-        try {
-            // Determine if it's an executive or councilor
-            const isExecutive = deleteId.startsWith("exec-");
-            const actualId = deleteId.split("-")[1];
-            const endpoint = isExecutive
-                ? `${API_BASE_URL}/executives/${actualId}`
-                : `${API_BASE_URL}/councilors/${actualId}`;
+        await withLoader(async () => {
+            try {
+                // Determine if it's an executive or councilor
+                const isExecutive = deleteId.startsWith("exec-");
+                const actualId = deleteId.split("-")[1];
+                const endpoint = isExecutive
+                    ? `${API_BASE_URL}/executives/${actualId}`
+                    : `${API_BASE_URL}/councilors/${actualId}`;
 
-            const res = await fetch(endpoint, {
-                method: "DELETE",
-                headers: {
-                    Accept: "application/json",
-                    "X-CSRF-TOKEN":
-                        document.querySelector('meta[name="csrf-token"]')
-                            ?.content || "",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                credentials: "same-origin",
-            });
+                const res = await fetch(endpoint, {
+                    method: "DELETE",
+                    headers: {
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN":
+                            document.querySelector('meta[name="csrf-token"]')
+                                ?.content || "",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                });
 
-            if (res.ok) {
-                fetchOfficials();
-            } else {
+                if (res.ok) {
+                    fetchOfficials();
+                } else {
+                    // Fallback: remove from local state
+                    setOfficials(officials.filter((o) => o.id !== deleteId));
+                }
+            } catch (e) {
                 // Fallback: remove from local state
                 setOfficials(officials.filter((o) => o.id !== deleteId));
             }
-        } catch (e) {
-            // Fallback: remove from local state
-            setOfficials(officials.filter((o) => o.id !== deleteId));
-        }
 
-        setShowDeleteModal(false);
-        setDeleteId(null);
+            setShowDeleteModal(false);
+            setDeleteId(null);
+        });
     };
 
     const getStatusBadge = (status) => {

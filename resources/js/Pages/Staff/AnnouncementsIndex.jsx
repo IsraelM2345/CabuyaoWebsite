@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { StaffLayout } from "../../Components/StaffSidebar";
+import { useGlobalLoader } from "../../Hooks/useGlobalLoader";
 import {
     Plus,
     Search,
@@ -53,6 +54,7 @@ export default function AnnouncementsIndex() {
         total: 0,
     });
     const [refreshing, setRefreshing] = useState(false);
+    const { withLoader } = useGlobalLoader();
 
     // Fetch announcements from API
     const fetchAnnouncements = useCallback(
@@ -117,9 +119,11 @@ export default function AnnouncementsIndex() {
     }, [fetchAnnouncements]);
 
     // Handle manual refresh
-    const handleRefresh = () => {
+    const handleRefresh = async () => {
         setRefreshing(true);
-        fetchAnnouncements(pagination.current_page);
+        await withLoader(async () => {
+            await fetchAnnouncements(pagination.current_page);
+        });
     };
 
     // Stats calculation

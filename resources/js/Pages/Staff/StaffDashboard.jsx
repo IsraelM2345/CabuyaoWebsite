@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { StaffLayout } from "../../Components/StaffSidebar";
+import { useGlobalLoader } from "../../Hooks/useGlobalLoader";
 import {
     FileText,
     Megaphone,
@@ -153,13 +154,6 @@ const quickActions = [
         href: "/staff/add-announcement",
     },
     {
-        label: "Edit Pages",
-        description: "Update page content",
-        icon: Edit3,
-        color: "bg-amber-500",
-        href: "/staff/page-editor",
-    },
-    {
         label: "View Messages",
         description: "Check citizen inquiries",
         icon: Mail,
@@ -192,37 +186,40 @@ export default function StaffDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [lastUpdated, setLastUpdated] = useState(null);
+    const { withLoader } = useGlobalLoader();
 
     // Fetch dashboard data from API
     const fetchDashboardData = async () => {
-        try {
-            setLoading(true);
-            const response = await fetch("/api/staff/dashboard/stats", {
-                headers: {
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-            });
+        await withLoader(async () => {
+            try {
+                setLoading(true);
+                const response = await fetch("/api/staff/dashboard/stats", {
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
 
-            if (!response.ok) {
-                throw new Error("Failed to fetch dashboard data");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch dashboard data");
+                }
+
+                const data = await response.json();
+
+                setStats(data.stats);
+                setContent(data.recentContent || []);
+                setPendingTasks(data.pendingTasks || []);
+                setPageViews(data.pageViews || []);
+                setSystemStatus(data.systemStatus || {});
+                setLastUpdated(new Date(data.timestamp));
+                setError(null);
+            } catch (err) {
+                console.error("Dashboard fetch error:", err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
             }
-
-            const data = await response.json();
-
-            setStats(data.stats);
-            setContent(data.recentContent || []);
-            setPendingTasks(data.pendingTasks || []);
-            setPageViews(data.pageViews || []);
-            setSystemStatus(data.systemStatus || {});
-            setLastUpdated(new Date(data.timestamp));
-            setError(null);
-        } catch (err) {
-            console.error("Dashboard fetch error:", err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+        });
     };
 
     useEffect(() => {
@@ -312,7 +309,7 @@ export default function StaffDashboard() {
                         <p className="text-blue-700 dark:text-blue-300 text-sm mt-0.5">
                             You have {stats.news.drafts} draft articles and{" "}
                             {stats.messages.unread} unread messages waiting for
-                            your attention.
+                            your attention. {stats.messages.replied} messages have been replied to.
                         </p>
                     </div>
                     <button
@@ -327,7 +324,7 @@ export default function StaffDashboard() {
             )}
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <StatCard
                     icon={FileText}
                     label="News Articles"
@@ -364,7 +361,7 @@ export default function StaffDashboard() {
                     value={stats?.messages.total ?? 0}
                     sub={
                         stats
-                            ? `${stats.messages.unread} unread, ${stats.messages.responded} responded (${stats.messages.trend})`
+                            ? `${stats.messages.unread} unread, ${stats.messages.read} read, ${stats.messages.replied} replied (${stats.messages.trend})`
                             : ""
                     }
                     iconBg="bg-emerald-500"
@@ -373,44 +370,43 @@ export default function StaffDashboard() {
                     }
                     loading={loading}
                 />
-                <StatCard
-                    icon={Edit3}
-                    label="Pages Managed"
-                    value={stats?.pages.total ?? 0}
-                    sub={stats ? `${stats.pages.updated} updated recently` : ""}
-                    iconBg="bg-amber-500"
-                    onClick={() =>
-                        (window.location.href = "/staff/page-editor")
-                    }
-                    loading={loading}
-                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 {/* Left Column - Charts & Content */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Page Views Chart */}
+                    {/* Content Activity Chart */}
                     <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 transition-colors">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                    Website Traffic
+                                    Content Activity
                                 </h3>
                                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                                    Page views over the last 7 days
+                                    News, announcements, and messages over the last 7 days
                                 </p>
                             </div>
-                            <button className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium transition-colors">
-                                <Download size={14} />
-                                Export
-                            </button>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                                    <span className="text-xs text-gray-600 dark:text-slate-400">News</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                                    <span className="text-xs text-gray-600 dark:text-slate-400">Announcements</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                                    <span className="text-xs text-gray-600 dark:text-slate-400">Messages</span>
+                                </div>
+                            </div>
                         </div>
                         <div
                             className="w-full"
                             style={{ height: 280, minHeight: 280 }}
                         >
                             <ResponsiveContainer width="100%" height={260}>
-                                <BarChart data={pageViews} barSize={24}>
+                                <BarChart data={pageViews} barSize={16}>
                                     <XAxis
                                         dataKey="day"
                                         tick={{ fontSize: 11 }}
@@ -428,9 +424,21 @@ export default function StaffDashboard() {
                                     />
                                     <Tooltip content={<CustomTooltip />} />
                                     <Bar
-                                        dataKey="views"
-                                        name="Page Views"
+                                        dataKey="news"
+                                        name="News Published"
                                         fill="#dc2626"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                    <Bar
+                                        dataKey="announcements"
+                                        name="Announcements Posted"
+                                        fill="#3b82f6"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                    <Bar
+                                        dataKey="messages"
+                                        name="Messages Received"
+                                        fill="#10b981"
                                         radius={[4, 4, 0, 0]}
                                     />
                                 </BarChart>

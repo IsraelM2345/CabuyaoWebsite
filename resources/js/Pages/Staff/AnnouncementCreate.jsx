@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { Link, router } from "@inertiajs/react";
 import { StaffLayout } from "../../Components/StaffSidebar";
+import { useGlobalLoader } from "../../Hooks/useGlobalLoader";
 import {
     ArrowLeft,
     Save,
@@ -16,6 +17,7 @@ import {
     Image as ImageIcon,
     Loader2,
 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 const announcementTypes = [
     "Public Advisory",
@@ -55,6 +57,7 @@ export default function AnnouncementCreate({ editingId }) {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const { withLoader } = useGlobalLoader();
 
     const mapUIStatusToApiStatus = (uiStatus) => {
         if (uiStatus === "published") return "Published";
@@ -184,64 +187,66 @@ export default function AnnouncementCreate({ editingId }) {
         setLoading(true);
         setErrors({});
 
-        try {
-            const apiStatus = mapUIStatusToApiStatus(formData.status);
+        await withLoader(async () => {
+            try {
+                const apiStatus = mapUIStatusToApiStatus(formData.status);
 
-            // Use FormData for image upload
-            const submitData = new FormData();
-            submitData.append("title", formData.title);
-            submitData.append("category", formData.type);
-            submitData.append("body", formData.content);
-            submitData.append("status", apiStatus);
-            submitData.append(
-                "date",
-                formData.effectiveDate ? formData.effectiveDate : null,
-            );
-            submitData.append("urgency", formData.urgency);
-            submitData.append("target_audience", formData.targetAudience);
-
-            // Send the actual image file to Laravel
-            if (formData.featuredImage) {
-                submitData.append("image_file", formData.featuredImage);
-            }
-
-            const url = editingId
-                ? `${API_BASE_URL}/announcements/${editingId}?_method=PUT`
-                : `${API_BASE_URL}/announcements`;
-
-            const method = editingId ? "POST" : "POST";
-
-            const response = await fetch(url, {
-                method,
-                body: submitData,
-                headers: {
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'meta[name="csrf-token"]',
-                    )?.content,
-                },
-            });
-
-            if (!response.ok) {
-                const errJson = await response.json().catch(() => ({}));
-                throw new Error(
-                    errJson?.message || "Failed to save announcement",
+                // Use FormData for image upload
+                const submitData = new FormData();
+                submitData.append("title", formData.title);
+                submitData.append("category", formData.type);
+                submitData.append("body", formData.content);
+                submitData.append("status", apiStatus);
+                submitData.append(
+                    "date",
+                    formData.effectiveDate ? formData.effectiveDate : null,
                 );
-            }
+                submitData.append("urgency", formData.urgency);
+                submitData.append("target_audience", formData.targetAudience);
 
-            setShowSuccessModal(true);
-            setTimeout(() => {
-                setShowSuccessModal(false);
-                router.visit("/staff/announcements-manager");
-            }, 1200);
-        } catch (err) {
-            setErrors({
-                general: err?.message || "Unable to save announcement",
-            });
-        } finally {
-            setLoading(false);
-        }
+                // Send the actual image file to Laravel
+                if (formData.featuredImage) {
+                    submitData.append("image_file", formData.featuredImage);
+                }
+
+                const url = editingId
+                    ? `${API_BASE_URL}/announcements/${editingId}?_method=PUT`
+                    : `${API_BASE_URL}/announcements`;
+
+                const method = editingId ? "POST" : "POST";
+
+                const response = await fetch(url, {
+                    method,
+                    body: submitData,
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRF-TOKEN": document.querySelector(
+                            'meta[name="csrf-token"]',
+                        )?.content,
+                    },
+                });
+
+                if (!response.ok) {
+                    const errJson = await response.json().catch(() => ({}));
+                    throw new Error(
+                        errJson?.message || "Failed to save announcement",
+                    );
+                }
+
+                setShowSuccessModal(true);
+                setTimeout(() => {
+                    setShowSuccessModal(false);
+                    router.visit("/staff/announcements-manager");
+                }, 1200);
+            } catch (err) {
+                setErrors({
+                    general: err?.message || "Unable to save announcement",
+                });
+            } finally {
+                setLoading(false);
+            }
+        });
     };
 
     const handleSaveDraft = async () => {
@@ -354,7 +359,7 @@ export default function AnnouncementCreate({ editingId }) {
                                 <div
                                     className="bg-gray-50 dark:bg-slate-700 rounded-lg p-6 min-h-[300px]"
                                     dangerouslySetInnerHTML={{
-                                        __html: formData.content,
+                                        __html: DOMPurify.sanitize(formData.content),
                                     }}
                                 />
                             </div>

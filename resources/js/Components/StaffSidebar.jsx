@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useGlobalLoader } from "../Hooks/useGlobalLoader";
 import {
     LayoutDashboard,
     FileText,
@@ -51,16 +52,6 @@ const NAV_ITEMS = [
                 label: "Create New",
                 href: "/staff/announcements-manager/create",
             },
-        ],
-    },
-    {
-        icon: Edit3,
-        label: "Page Editor",
-        href: "/staff/page-editor",
-        subItems: [
-            { label: "Home Page", href: "/staff/page-editor/home" },
-            { label: "About Page", href: "/staff/page-editor/about" },
-            { label: "Services", href: "/staff/page-editor/services" },
         ],
     },
     { icon: Mail, label: "Contact Inbox", href: "/staff/contact-inbox" },
@@ -404,6 +395,7 @@ export function StaffTopBar({ title, subtitle }) {
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState({ type: "", text: "" });
     const fileInputRef = useRef(null);
+    const { withLoader } = useGlobalLoader();
 
     const [editForm, setEditForm] = useState({
         firstName: "",
@@ -558,68 +550,70 @@ export function StaffTopBar({ title, subtitle }) {
         setIsSaving(true);
         setSaveMessage({ type: "", text: "" });
 
-        try {
-            const formData = new FormData();
-            // Always append all fields so backend can handle updates properly
-            formData.append("firstName", editForm.firstName || "");
-            formData.append("lastName", editForm.lastName || "");
-            formData.append("middleName", editForm.middleName || "");
-            formData.append("email", editForm.email || "");
-            formData.append("position", editForm.position || "");
-            formData.append("department", editForm.department || "");
-            if (editForm.profileImage) {
-                formData.append("avatar", editForm.profileImage);
+        await withLoader(async () => {
+            try {
+                const formData = new FormData();
+                // Always append all fields so backend can handle updates properly
+                formData.append("firstName", editForm.firstName || "");
+                formData.append("lastName", editForm.lastName || "");
+                formData.append("middleName", editForm.middleName || "");
+                formData.append("email", editForm.email || "");
+                formData.append("position", editForm.position || "");
+                formData.append("department", editForm.department || "");
+                if (editForm.profileImage) {
+                    formData.append("avatar", editForm.profileImage);
+                }
+
+                const res = await fetch("/api/staff/profile/update", {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRF-TOKEN": document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content"),
+                    },
+                    body: formData,
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.message || errorData.errors ? Object.values(errorData.errors).flat().join(', ') : "Failed to update profile");
+                }
+
+                const updatedData = await res.json();
+                setMe(updatedData.user);
+
+                // Update edit form with new data from server
+                if (updatedData.user) {
+                    setEditForm((prev) => ({
+                        ...prev,
+                        firstName: updatedData.user.firstName || "",
+                        lastName: updatedData.user.lastName || "",
+                        middleName: updatedData.user.middleName || "",
+                        email: updatedData.user.email || "",
+                        position: updatedData.user.position || "",
+                        department: updatedData.user.department || "",
+                        profileImageUrl: updatedData.user.avatar || "",
+                    }));
+                }
+
+                setSaveMessage({
+                    type: "success",
+                    text: "Profile updated successfully!",
+                });
+                setTimeout(() => {
+                    setIsEditing(false);
+                    setSaveMessage({ type: "", text: "" });
+                }, 2000);
+            } catch (error) {
+                setSaveMessage({
+                    type: "error",
+                    text: error.message || "An error occurred.",
+                });
+            } finally {
+                setIsSaving(false);
             }
-
-            const res = await fetch("/api/staff/profile/update", {
-                method: "POST",
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest",
-                    "X-CSRF-TOKEN": document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute("content"),
-                },
-                body: formData,
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || errorData.errors ? Object.values(errorData.errors).flat().join(', ') : "Failed to update profile");
-            }
-
-            const updatedData = await res.json();
-            setMe(updatedData.user);
-
-            // Update edit form with new data from server
-            if (updatedData.user) {
-                setEditForm((prev) => ({
-                    ...prev,
-                    firstName: updatedData.user.firstName || "",
-                    lastName: updatedData.user.lastName || "",
-                    middleName: updatedData.user.middleName || "",
-                    email: updatedData.user.email || "",
-                    position: updatedData.user.position || "",
-                    department: updatedData.user.department || "",
-                    profileImageUrl: updatedData.user.avatar || "",
-                }));
-            }
-
-            setSaveMessage({
-                type: "success",
-                text: "Profile updated successfully!",
-            });
-            setTimeout(() => {
-                setIsEditing(false);
-                setSaveMessage({ type: "", text: "" });
-            }, 2000);
-        } catch (error) {
-            setSaveMessage({
-                type: "error",
-                text: error.message || "An error occurred.",
-            });
-        } finally {
-            setIsSaving(false);
-        }
+        });
     };
 
     return (

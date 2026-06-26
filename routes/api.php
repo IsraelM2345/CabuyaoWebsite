@@ -112,7 +112,6 @@ Route::middleware(['web', 'auth'])->prefix('staff')->group(function () {
     // Profile update (used by StaffTopBar)
     Route::post('profile/update', [\App\Http\Controllers\Staff\ProfileController::class, 'update']);
 
-
     // Dashboard Statistics
     Route::get('/dashboard/stats', [DashboardController::class, 'getDashboardData']);
 });

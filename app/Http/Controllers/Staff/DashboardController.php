@@ -33,13 +33,13 @@ class DashboardController extends Controller
         // Contact Messages Statistics
         $messagesTotal = PublicContactMessage::count();
         $messagesUnread = PublicContactMessage::where('status', 'Unread')->count();
-        $messagesResponded = PublicContactMessage::where('status', 'Responded')->count();
-        $messagesTrend = $this->calculateTrend(PublicContactMessage::class, 'Responded');
+        $messagesRead = PublicContactMessage::where('status', 'Read')->count();
+        $messagesReplied = PublicContactMessage::where('status', 'Replied')->count();
+        $messagesArchived = PublicContactMessage::where('status', 'Archived')->count();
+        $messagesTrend = $this->calculateTrend(PublicContactMessage::class, 'Replied');
 
-        // Pages Statistics (we have 12 main pages in the portal)
-        $pagesTotal = 12;
-        $pagesUpdated = 8;
-        $pagesNeedsUpdate = 4;
+        // Pages Statistics - Removed since Page Editor was deleted
+        // Staff now manages content through News, Announcements, and Media
 
         // Recent Content (mix of news, announcements, and pages)
         $recentNews = PublicNews::with('author')
@@ -87,7 +87,7 @@ class DashboardController extends Controller
             ],
             [
                 'id' => 2,
-                'task' => 'Respond to citizen contact messages',
+                'task' => 'Review and add remarks to contact messages',
                 'count' => $messagesUnread,
                 'urgent' => $messagesUnread > 0,
                 'icon' => 'Mail',
@@ -99,17 +99,10 @@ class DashboardController extends Controller
                 'urgent' => false,
                 'icon' => 'Calendar',
             ],
-            [
-                'id' => 4,
-                'task' => 'Review and approve new images',
-                'count' => 0, // No status field in public_media table yet
-                'urgent' => false,
-                'icon' => 'Image',
-            ],
         ];
 
-        // Page Views Data (last 7 days) - Using a simulation since we don't have analytics table
-        $pageViewsData = $this->getPageViewsData();
+        // Content Activity Data (last 7 days)
+        $pageViewsData = $this->getContentActivityData();
 
         // System Status
         $systemStatus = [
@@ -136,14 +129,10 @@ class DashboardController extends Controller
                 'messages' => [
                     'total' => $messagesTotal,
                     'unread' => $messagesUnread,
-                    'responded' => $messagesResponded,
+                    'read' => $messagesRead,
+                    'replied' => $messagesReplied,
+                    'archived' => $messagesArchived,
                     'trend' => $messagesTrend,
-                ],
-                'pages' => [
-                    'total' => $pagesTotal,
-                    'updated' => $pagesUpdated,
-                    'needsUpdate' => $pagesNeedsUpdate,
-                    'trend' => '0%',
                 ],
             ],
             'recentContent' => $recentContent,
@@ -182,18 +171,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * Generate page views data for the last 7 days
+     * Generate content activity data for the last 7 days
      */
-    private function getPageViewsData()
+    private function getContentActivityData()
     {
-        $days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         $data = [];
 
-        foreach ($days as $day) {
-            // Simulate page views (in real app, this would come from analytics)
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $dayName = $date->format('M j'); // e.g., "Jun 26"
+
+            // Count news published on this day
+            $newsCount = PublicNews::whereDate('created_at', $date->format('Y-m-d'))
+                ->where('status', 'Published')
+                ->count();
+
+            // Count announcements posted on this day
+            $announcementCount = PublicAnnouncement::whereDate('created_at', $date->format('Y-m-d'))
+                ->where('status', 'Published')
+                ->count();
+
+            // Count messages received on this day
+            $messageCount = PublicContactMessage::whereDate('created_at', $date->format('Y-m-d'))
+                ->count();
+
             $data[] = [
-                'day' => $day,
-                'views' => rand(1500, 4500),
+                'day' => $dayName,
+                'news' => $newsCount,
+                'announcements' => $announcementCount,
+                'messages' => $messageCount,
             ];
         }
 

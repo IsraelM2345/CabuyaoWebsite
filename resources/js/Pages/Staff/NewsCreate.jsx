@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, router } from "@inertiajs/react";
 import { StaffLayout } from "../../Components/StaffSidebar";
+import { useGlobalLoader } from "../../Hooks/useGlobalLoader";
 import {
     ArrowLeft,
     Save,
@@ -16,6 +17,7 @@ import {
     FileText,
     Loader2,
 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 const categories = [
     "Technology",
@@ -56,6 +58,7 @@ export default function NewsCreate({ editingId }) {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const { withLoader } = useGlobalLoader();
 
     // Load existing news if editing
     useEffect(() => {
@@ -154,64 +157,66 @@ export default function NewsCreate({ editingId }) {
         }
 
         setLoading(true);
-        try {
-            // Prepare form data for API
-            const submitData = new FormData();
-            submitData.append("title", formData.title);
-            submitData.append("category", formData.category);
-            submitData.append("excerpt", formData.excerpt);
-            submitData.append("body", formData.content);
-            submitData.append("status", status || formData.status);
-            submitData.append("author", formData.author || "Admin");
-            submitData.append(
-                "date",
-                formData.date || new Date().toISOString().split("T")[0],
-            );
+        await withLoader(async () => {
+            try {
+                // Prepare form data for API
+                const submitData = new FormData();
+                submitData.append("title", formData.title);
+                submitData.append("category", formData.category);
+                submitData.append("excerpt", formData.excerpt);
+                submitData.append("body", formData.content);
+                submitData.append("status", status || formData.status);
+                submitData.append("author", formData.author || "Admin");
+                submitData.append(
+                    "date",
+                    formData.date || new Date().toISOString().split("T")[0],
+                );
 
-            // Send the actual image file to Laravel
-            if (formData.featuredImage) {
-                submitData.append("image_file", formData.featuredImage);
+                // Send the actual image file to Laravel
+                if (formData.featuredImage) {
+                    submitData.append("image_file", formData.featuredImage);
+                }
+
+                const url = isEditing
+                    ? `${API_BASE_URL}/news/${editingId}?_method=PUT`
+                    : `${API_BASE_URL}/news`;
+
+                const method = isEditing ? "POST" : "POST";
+
+                const response = await fetch(url, {
+                    method,
+                    body: submitData,
+                    headers: {
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN":
+                            document.querySelector('meta[name="csrf-token"]')
+                                ?.content || "",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Failed to save news");
+                }
+
+                setSuccessMessage(
+                    isEditing
+                        ? "Article updated successfully!"
+                        : "Article created successfully!",
+                );
+                setShowSuccessModal(true);
+
+                setTimeout(() => {
+                    setShowSuccessModal(false);
+                    router.visit("/staff/news-manager");
+                }, 2000);
+            } catch (err) {
+                setErrors({ general: err.message });
+            } finally {
+                setLoading(false);
             }
-
-            const url = isEditing
-                ? `${API_BASE_URL}/news/${editingId}?_method=PUT`
-                : `${API_BASE_URL}/news`;
-
-            const method = isEditing ? "POST" : "POST";
-
-            const response = await fetch(url, {
-                method,
-                body: submitData,
-                headers: {
-                    Accept: "application/json",
-                    "X-CSRF-TOKEN":
-                        document.querySelector('meta[name="csrf-token"]')
-                            ?.content || "",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to save news");
-            }
-
-            setSuccessMessage(
-                isEditing
-                    ? "Article updated successfully!"
-                    : "Article created successfully!",
-            );
-            setShowSuccessModal(true);
-
-            setTimeout(() => {
-                setShowSuccessModal(false);
-                router.visit("/staff/news-manager");
-            }, 2000);
-        } catch (err) {
-            setErrors({ general: err.message });
-        } finally {
-            setLoading(false);
-        }
+        });
     };
 
     const handleSaveDraft = (e) => {
@@ -385,7 +390,7 @@ export default function NewsCreate({ editingId }) {
                                 <div
                                     className="bg-gray-50 dark:bg-slate-700 rounded-lg p-6 min-h-[400px]"
                                     dangerouslySetInnerHTML={{
-                                        __html: formData.content,
+                                        __html: DOMPurify.sanitize(formData.content),
                                     }}
                                 />
                             </div>

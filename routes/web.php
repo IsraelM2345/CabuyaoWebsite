@@ -124,9 +124,10 @@ Route::get('/staff/register', function () {
 })->name('staff.register');
 
 
-Route::post('/staff/register', [AuthController::class, 'register'])->name('staff.register.submit');
+// Rate limited register (3 attempts per minute) to prevent abuse
+Route::post('/staff/register', [AuthController::class, 'register'])->middleware('throttle:3,1')->name('staff.register.submit');
 // Rate limited login (5 attempts per minute) to prevent brute force
-Route::post('/staff/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
+Route::post('/staff/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('staff.login.submit');
 
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -254,11 +255,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/news-manager', function () {
             return Inertia::render('Staff/NewsIndex');
         })->name('news-manager');
-
-        // Page Editor - Edit public page content
-        Route::get('/page-editor/{page?}', function ($page = 'home') {
-            return Inertia::render('Staff/PageEditor', ['page' => $page]);
-        })->name('page-editor');
 
         // Media Manager - Manage images and documents
         Route::get('/media-manager', function () {

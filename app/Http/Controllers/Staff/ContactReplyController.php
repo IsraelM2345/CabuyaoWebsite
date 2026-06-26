@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\PublicContactMessage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class ContactReplyController extends Controller
 {
@@ -51,60 +49,23 @@ class ContactReplyController extends Controller
     }
 
     /**
-     * Reply to a contact message.
+     * Add staff remark to a contact message.
      */
     public function reply(Request $request, PublicContactMessage $contactMessage)
     {
-        Log::info('ContactReply endpoint hit', [
-            'contact_message_id' => $contactMessage->id,
-            'status_before' => $contactMessage->status,
-        ]);
 
         $validated = $request->validate([
             'reply_text' => ['required', 'string'],
         ]);
 
-        // Update the contact message with reply
+        // Update the contact message with staff remark
         $contactMessage->reply = $validated['reply_text'];
         $contactMessage->replied_at = now();
         $contactMessage->status = 'Replied';
         $contactMessage->save();
 
-        // Send email notification to citizen (send-based for reliability)
-        try {
-            \Illuminate\Support\Facades\Log::info('ContactReply about to send', [
-                'contact_message_id' => $contactMessage->id,
-                'to' => $contactMessage->email,
-                'subject' => $contactMessage->subject,
-            ]);
-
-            \Illuminate\Support\Facades\Mail::to($contactMessage->email)
-                ->send(new \App\Mail\ContactReplyMail($contactMessage));
-
-            \Illuminate\Support\Facades\Log::info('ContactReply sent successfully', [
-                'contact_message_id' => $contactMessage->id,
-                'to' => $contactMessage->email,
-            ]);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('ContactReply send failed', [
-                'contact_message_id' => $contactMessage->id,
-                'to' => $contactMessage->email,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to send email reply',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-
-
-
-
-
-
         return response()->json([
-            'message' => 'Reply sent successfully',
+            'message' => 'Staff remark added successfully',
             'data' => $contactMessage
         ]);
     }
